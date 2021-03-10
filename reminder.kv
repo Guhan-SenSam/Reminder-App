@@ -1,0 +1,233 @@
+<Runner>:
+    ScreenManager:
+        id:screen_manager
+        MainScreen:
+            name:"MainScreen"
+        ListViewScreen:
+            name:"ListViewScreen"
+
+
+
+<MainScreen>:
+    canvas:
+        Color:
+            rgba:44/250,62/250,80/250, 1
+        Rectangle:
+            size:self.size
+            pos:self.pos
+
+    FloatLayout:
+        size:self.size
+        pos:self.pos
+        id:ele3
+        canvas.before:
+            PushMatrix
+            Rotate:
+                angle: 5
+                axis: 0,0,1
+                origin: root.center[0]-self.width/1.8, root.center[1]+self.height/2
+        canvas.after:
+            PopMatrix
+        ListBlueprint:
+            pos_hint:{'center_x':.42, "center_y":.5}
+            size_hint:.73,.70
+            md_bg_color:90/255,89/255,101/255,1
+
+
+    FloatLayout:
+        size:self.size
+        pos:self.pos
+        id:ele2
+        canvas.before:
+            PushMatrix
+            Rotate:
+                angle: 3
+                axis: 0,0,1
+                origin: root.center[0]-self.width/1.8, root.center[1]+self.height/2
+        canvas.after:
+            PopMatrix
+        ListBlueprint:
+            pos_hint:{'center_x':.45, "center_y":.5}
+            size_hint:.78,.70
+            md_bg_color:70/255,69/255,81/255,1
+
+    FloatLayout:
+        size:self.size
+        pos:self.pos
+        id:ele1
+        canvas.before:
+            PushMatrix
+            Rotate:
+                angle: 0
+                axis: 0,0,1
+                origin: root.center[0]-self.width/1.8, root.center[1]+self.height/2
+        canvas.after:
+            PopMatrix
+        ListBlueprint:
+            md_bg_color:50/255,49/255,61/255,1
+            elevation:13
+            size_hint:.85,.70
+            pos_hint:{'center_x':.5, "center_y":.5}
+
+<ListViewScreen>:
+    canvas:
+        Color:
+            rgba:50/255,49/255,61/255,1
+        Rectangle:
+            size:self.size
+            pos:self.pos
+
+
+<ListReminderElement>:
+    size_hint:1,None
+    height:self.minimum_height
+    orientation:'horizontal'
+    MDCheckbox:
+        checkbox_icon_normal:"checkbox-blank-circle-outline"
+        checkbox_icon_down:"checkbox-marked-circle"
+        size: "20dp", "20dp"
+        size_hint:None, None
+        pos_hint:{'center_x':.5, 'center_y':.75}
+
+    BoxLayout:
+        orientation:"vertical"
+        size_hint:None, None
+        height:self.minimum_height
+        separation:'30dp'
+
+
+        Label:
+            id:title
+            text:
+            size_hint:None,None
+            size:self.texture_size
+            text_size:self.parent.parent.width, dp(20)
+            padding:("10dp", "0dp")
+            font_name:"Roboto-Medium.ttf"
+            font_size:"18sp"
+            shorten:True
+            shorten_from:"right"
+        Label:
+            id:desc
+            text:
+            size_hint:None,None
+            padding:("10dp", "0dp")
+            size:self.texture_size
+            text_size:self.parent.parent.width, dp(40)
+            font_name:"Roboto-Regular.ttf"
+            color:1,1,1,0.5
+            font_size:"14sp"
+            split_str:' '
+
+
+
+
+
+<ListContent>:
+    pos:self.pos
+    size:self.size
+    Label:
+        id:heading
+        text:'Reminder'
+        size: self.texture_size
+        text_size:(self.parent.size[0]-self.parent.size[0]/3.5, self.parent.height)
+        pos_hint:{ "center_y":.5}
+        valign:'top'
+        underline:True
+        halign:'left'
+        padding:("15dp", "20dp")
+        font_name:"Roboto-Black.ttf"
+        font_size:'30sp'
+        shorten:True
+        shorten_from:"right"
+
+    MDRaisedButton:
+        id:view_button
+        pos_hint:{'center_x':.87, "center_y":.93}
+        size_hint:.19,.06
+        md_bg_color: 218/255,68/255,83/255, 1
+        text:"View"
+        elevation:9
+        font:"Roboto-Regular.ttf"
+
+    GridLayout:
+        cols:1
+        id:reminder_container
+        pos_hint:{"center_x":.5, "center_y":.45}
+        size_hint:1,.80
+        padding:(30,20,20,20)
+        spacing:'20dp'
+
+
+<ListBlueprint>:
+    opacity:1
+    elevation:0
+    radius:60,60,60,60
+
+
+<ListViewBlueprint>:
+    rv_layout:container
+    viewclass: 'ListReminderElement'
+    orientation:'vertical'
+    RecycleBoxLayout:
+        default_size: None, dp(56)
+        default_size_hiint: 0.1,  None
+        size_hint_y: None
+        orientation:'vertical'
+        id:container
+        height:self.minimum_height
+
+<NewListBlueprint>:
+    size_hint:1,1
+    Label:
+        text:"Create a new List"
+        size: self.texture_size
+        pos_hint:{ "center_y":.8}
+        underline:True
+        halign:'left'
+        padding:("15dp", "20dp")
+        font_name:"Roboto-Black.ttf"
+        font_size:'30sp'
+
+    MDTextField:
+        hint_text: 'Enter a new list name'
+        pos_hint:{ "center_y":.6, 'center_x':.5}
+        size_hint: 0.8,0.15
+        color_mode: 'custom'
+        line_color_focus:218/255,68/255,83/255, 1
+        current_hint_text_color:1,1,1,1
+
+    MDRaisedButton:
+        id:confirm_button
+        pos_hint:{'center_x':.25, "center_y":.3}
+        size_hint:.2,.08
+        md_bg_color: 218/255,68/255,83/255, 1
+        text:"Confirm"
+        elevation:9
+        font:"Roboto-Regular.ttf"
+    MDRaisedButton:
+        id:cancel_button
+        pos_hint:{'center_x':.75, "center_y":.3}
+        size_hint:.2,.08
+        md_bg_color: 218/255,68/255,83/255, 1
+        text:"Cancel"
+        elevation:9
+        font:"Roboto-Regular.ttf"
+
+
+
+
+
+
+
+<DoActionButton>:
+    data:app.data
+    icon: "plus"
+    callback: app.plus_button_callback
+    root_button_anim: True
+    bg_color_root_button:218/255,68/255,83/255, 1
+    color_icon_root_button:50/255,49/255,61/255,1
+    bg_color_stack_button:218/255,68/255,83/255, 1
+    color_icon_stack_button:50/255,49/255,61/255,1
+    bg_hint_color:218/255,68/255,83/255, 1
+    label_text_color:50/255,49/255,61/255,1
