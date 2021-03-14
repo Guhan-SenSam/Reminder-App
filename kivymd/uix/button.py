@@ -778,15 +778,7 @@ Builder.load_string(
     padding: "8dp", "4dp", "8dp", "4dp"
     height: label.texture_size[1] + self.padding[1] * 2
     width: label.texture_size[0] + self.padding[0] * 2
-    elevation: 10
 
-    canvas:
-        Color:
-            rgba: self.theme_cls.primary_color if not root.bg_color else root.bg_color
-        RoundedRectangle:
-            pos: self.pos
-            size: self.size
-            radius: [5]
 
     Label:
         id: label
@@ -1327,7 +1319,7 @@ class BaseFloatingBottomButton(MDFloatingActionButton, MDTooltip):
 
 
 class BaseFloatingLabel(
-    ThemableBehavior, RectangularElevationBehavior, BoxLayout
+    ThemableBehavior, BoxLayout
 ):
     text = StringProperty()
     text_color = ListProperty()
@@ -1439,7 +1431,7 @@ class MDFloatingActionButtonSpeedDial(ThemableBehavior, FloatLayout):
     and defaults to `False`.
     """
 
-    opening_transition = StringProperty("out_cubic")
+    opening_transition = StringProperty("in_out_circ")
     """
     The name of the stack opening animation type.
 
@@ -1447,7 +1439,7 @@ class MDFloatingActionButtonSpeedDial(ThemableBehavior, FloatLayout):
     and defaults to `'out_cubic'`.
     """
 
-    closing_transition = StringProperty("out_cubic")
+    closing_transition = StringProperty("in_out_circ")
     """
     The name of the stack closing animation type.
 
@@ -1473,7 +1465,7 @@ class MDFloatingActionButtonSpeedDial(ThemableBehavior, FloatLayout):
     and defaults to `'out_cubic'`.
     """
 
-    opening_time = NumericProperty(0.5)
+    opening_time = NumericProperty(0.3)
     """
     Time required for the stack to go to: attr:`state` `'open'`.
 

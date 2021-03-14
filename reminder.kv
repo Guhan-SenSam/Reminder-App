@@ -1,3 +1,7 @@
+#:import wd kivy.core.window.Window
+
+
+
 <Runner>:
     ScreenManager:
         id:screen_manager
@@ -79,10 +83,12 @@
 
 
 <ListReminderElement>:
+    name:
     size_hint:1,None
     height:self.minimum_height
     orientation:'horizontal'
     MDCheckbox:
+        id:check_box
         checkbox_icon_normal:"checkbox-blank-circle-outline"
         checkbox_icon_down:"checkbox-marked-circle"
         size: "20dp", "20dp"
@@ -160,22 +166,49 @@
 
 
 <ListBlueprint>:
+    orientation:'vertical'
     opacity:1
     elevation:0
     radius:60,60,60,60
 
 
+<ListViewBanner>:
+    elevation:10
+    md_bg_color:218/255,68/255,83/255,1
+    pos_hint:{"center_x":.5, "center_y":.9}
+    size_hint:1,0.1
+
+
 <ListViewBlueprint>:
-    rv_layout:container
-    viewclass: 'ListReminderElement'
-    orientation:'vertical'
+    viewclass: 'IndivualReminderElementBlueprint'
+    data: [{"text": f"{i} {'test'*i**2}"} for i in range(20)]
     RecycleBoxLayout:
-        default_size: None, dp(56)
-        default_size_hiint: 0.1,  None
+        id: container
+        default_size: None, None
+        default_size_hint: 1, None
         size_hint_y: None
-        orientation:'vertical'
-        id:container
-        height:self.minimum_height
+        height: self.minimum_height
+        orientation: 'vertical'
+        spacing:'20dp'
+
+
+
+<IndivualReminderElementBlueprint@MDCard>:
+    md_bg_color:218/255,68/255,83/255,1
+    size_hint: 1, None
+    text: ''
+    Label:
+        on_size: root.height = self.height
+        size_hint: 1, None
+        text_size: root.width, None
+        size: self.texture_size
+        text: root.text
+
+
+
+
+
+
 
 <NewListBlueprint>:
     size_hint:1,1
@@ -218,8 +251,6 @@
 
 
 
-
-
 <DoActionButton>:
     data:app.data
     icon: "plus"
@@ -229,5 +260,4 @@
     color_icon_root_button:50/255,49/255,61/255,1
     bg_color_stack_button:218/255,68/255,83/255, 1
     color_icon_stack_button:50/255,49/255,61/255,1
-    bg_hint_color:218/255,68/255,83/255, 1
-    label_text_color:50/255,49/255,61/255,1
+    label_text_color:218/255,68/255,83/255, 1

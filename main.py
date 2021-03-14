@@ -14,6 +14,7 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.animation import Animation
 from kivy.properties import NumericProperty
 from kivy.clock import Clock
+from kivy.properties import ObjectProperty, NumericProperty
 
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.button import Button
@@ -32,7 +33,7 @@ connection = sqlite3.connect('reminder.db')
 
 mycursor = connection.cursor()
 
-class StartUILoader():
+class MainViewHandler():
 
     def program_loader(self):
         global all_lists
@@ -44,15 +45,15 @@ class StartUILoader():
             else:
                 all_lists.append(a[0])
         all_lists.sort()
-        StartUILoader.first_list_loader(self)
+        MainViewHandler.first_list_loader(self)
 
 
 
     def first_list_loader(self):
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
-        self.runner_object.bind(on_swipe_down = partial(StartUILoader.slider, self, 0))
+        self.runner_object.bind(on_swipe_down = partial(MainViewHandler.slider, self, 0))
         self.list_content = ListContent()
-        self.list_content.ids.heading.text = all_lists[0]
+        self.list_content.ids.heading.text = all_lists[0].replace("_"," ")
         self.list_content.ids.view_button.bind(on_press = partial(OpenListView.list_view_loader_transition, self))
         Mainscreenvar.ids.ele1.children[0].add_widget(self.list_content)
         mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC LIMIT 6".format(all_lists[0]))
@@ -60,6 +61,8 @@ class StartUILoader():
         for a in data:
             self.list_reminder_element = ListReminderElement()
             self.list_reminder_element.ids.title.text = a[0]
+            self.list_reminder_element.ids.check_box.bind(on_press = partial(MainViewHandler.reminder_complete_handler, self))
+            self.list_reminder_element.name = a[4]
             if a[1] != None:
                 self.list_reminder_element.ids.desc.text = a[1]
             self.list_content.ids.reminder_container.add_widget(self.list_reminder_element)
@@ -75,7 +78,7 @@ class StartUILoader():
             anim1 = Animation(pos_hint = {'center_x':.5, "center_y":-1}, duration = .3, t= 'in_out_circ')
             card_to_drop = "ele{}".format(counter)
             anim1.start(Mainscreenvar.ids[card_to_drop].children[0])
-            anim1.bind(on_complete = partial(StartUILoader.swapper,self, operation))
+            anim1.bind(on_complete = partial(MainViewHandler.swapper,self, operation))
             Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
 
     def swapper(self,operation,anim,caller):
@@ -128,7 +131,7 @@ class StartUILoader():
             ele = collections.deque(all_lists)
             ele.rotate(-1)
             all_lists = ele
-            Clock.schedule_once(partial(StartUILoader.load_next_list_title,self),.2)
+            Clock.schedule_once(partial(MainViewHandler.load_next_list_title,self),.2)
         elif operation == 1:
             swiping = False
             Creator.create_new_list_load_ui(self)
@@ -139,18 +142,20 @@ class StartUILoader():
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         card_to_add_to = 'ele{}'.format(counter)
         self.list_content = ListContent()
-        self.list_content.ids.heading.text = all_lists[0]
+        self.list_content.ids.heading.text = all_lists[0].replace('_', ' ')
         self.list_content.ids.view_button.bind(on_press = partial(OpenListView.list_view_loader_transition, self))
         Mainscreenvar.ids[card_to_add_to].children[0].add_widget(self.list_content)
-        event = Clock.schedule_once(partial(StartUILoader.load_next_list_reminders,self,data), .2)
+        event = Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data), .2)
 
 
     def load_next_list_reminders(self, data, *args):
         global swiping
         if len(data) != 0:
             list_reminder_element = ListReminderElement()
+            list_reminder_element.ids.check_box.bind(on_press = partial(MainViewHandler.reminder_complete_handler, self))
             list_reminder_element.opacity = 0
             list_reminder_element.ids.title.text = data[0][0]
+            list_reminder_element.name = data[0][4]
             if data[0][1] != None:
                 list_reminder_element.ids.desc.text = data[0][1]
 
@@ -158,9 +163,23 @@ class StartUILoader():
             anim1 = Animation(opacity= 1, duration = .3, )
             anim1.start(list_reminder_element)
             del data[0]
-            Clock.schedule_once(partial(StartUILoader.load_next_list_reminders,self,data), .15)
+            Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data), .15)
         else:
             swiping = False
+
+
+    def reminder_complete_handler(self, instance):
+        if instance.parent.ids.title.strikethrough == False:
+            instance.parent.ids.title.strikethrough = True
+            instance.parent.ids.desc.strikethrough = True
+            mycursor.execute("UPDATE {} SET state = 1 WHERE creation_order = {}".format(all_lists[0], instance.parent.name))
+            connection.commit()
+        else:
+            instance.parent.ids.title.strikethrough = False
+            instance.parent.ids.desc.strikethrough = False
+            mycursor.execute("UPDATE {} SET state = 0 WHERE creation_order = {}".format(all_lists[0], instance.parent.name))
+            connection.commit()
+
 
 class OpenListView():
 
@@ -178,15 +197,20 @@ class OpenListView():
 
 
     def list_view_loader(self,anim_object,caller):
+        global swiping
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         name = 'ele{}'.format(counter)
         self.test = Button(on_press = partial(OpenListView.back_op,self), size_hint = (0.1,0.1))
+        # list_view_banner = ListViewBanner()
         list_view_element = ListViewBlueprint()
-        Mainscreenvar.ids[name].children[0].add_widget(self.test)
-        # Mainscreenvar.ids[name].children[0].add_widget(list_view_element)
+        # Mainscreenvar.ids[name].children[0].add_widget(self.test)
+        # Mainscreenvar.ids[name].children[0].add_widget(list_view_banner)
+        Mainscreenvar.ids[name].children[0].add_widget(list_view_element)
+        swiping = True
 
 
     def back_op(self, caller):
+        global swiping
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         anim1 = Animation(size_hint = (.85,.70), radius=(60,60,60,60), duration = .5, t = 'in_out_circ')
         anim2 = Animation(pos_hint = {'center_x':.45, 'center_y':.5}, duration = .7, t = 'in_out_circ')
@@ -196,7 +220,8 @@ class OpenListView():
         anim2.start(Mainscreenvar.children[2].children[0])
         anim3.start(Mainscreenvar.children[3].children[0])
         Mainscreenvar.ids[name].children[0].clear_widgets()
-        StartUILoader.load_next_list_title(self)
+        MainViewHandler.load_next_list_title(self)
+        swiping = False
 
 
 class Creator():
@@ -208,6 +233,7 @@ class Creator():
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         newlist = NewListBlueprint()
         newlist.ids.confirm_button.bind(on_press = partial(Creator.create_new_list, self))
+        newlist.ids.cancel_button.bind(on_press = partial(Creator.cancel_new_list, self))
         current_card = 'ele' + str(counter)
         Mainscreenvar.ids[current_card].children[0].add_widget(newlist)
 
@@ -251,8 +277,11 @@ class Creator():
                 all_lists.append(a[0])
         all_lists.sort()
         all_lists.insert(1, new_name)
-        print(all_lists)
-        StartUILoader.slider(self, 0, None)
+        MainViewHandler.slider(self, 0, None)
+
+    def cancel_new_list(self, instance):
+        MainViewHandler.slider(self,0, None)
+
 
 
 
@@ -275,16 +304,17 @@ class ListContent(RelativeLayout):
 class ListBlueprint(MDCard):
     pass
 
+class ListViewBanner(MDCard):
+    pass
+
 class ListViewBlueprint(RecycleView):
-    def __init__(self, **kwargs):
-        super(ListViewBlueprint, self).__init__(**kwargs)
-        self.data = [{'id':str(x), 'value1':str(x)} for x in range(100)]
+    pass
+
 
 class NewListBlueprint(RelativeLayout):
     pass
 
 class DoActionButton(MDFloatingActionButtonSpeedDial):
-
     pass
 
 class MainScreen(Screen):
@@ -309,13 +339,13 @@ class Mainapp(MDApp):
 
 
     def on_start(self):
-        StartUILoader.program_loader(self)
+        MainViewHandler.program_loader(self)
 
     def plus_button_callback(self, instance):
         if instance.icon == 'alarm':
             pass
         elif instance.icon == 'format-list-checkbox':
-            StartUILoader.slider(self, 1, None)
+            MainViewHandler.slider(self, 1, None)
 
 if platform != 'android':
     Window.size = (360,640)
