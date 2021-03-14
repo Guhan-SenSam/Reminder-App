@@ -24,6 +24,7 @@ import gesture_box as gesture
 from functools import partial
 import sqlite3
 import collections
+import plyer
 
 from time import time
 import re
@@ -79,6 +80,10 @@ class MainViewHandler():
             card_to_drop = "ele{}".format(counter)
             anim1.start(Mainscreenvar.ids[card_to_drop].children[0])
             anim1.bind(on_complete = partial(MainViewHandler.swapper,self, operation))
+            try:
+                plyer.vibrator.vibrate(0.03)
+            except:
+                pass
             Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
 
     def swapper(self,operation,anim,caller):
@@ -93,8 +98,7 @@ class MainViewHandler():
         anim2 = Animation(angle = 0, duration = .4)
         anim1.start(Mainscreenvar.ids[card1_to_edit].children[0])
         anim2.start(Mainscreenvar.ids[card1_to_edit].canvas.before.children[-1])
-
-
+        anim2.bind(on_complete = partial(MainViewHandler.vibration_handler, self, 0.02))
         if counter+2 == 4:
             card2_to_edit = 'ele1'
         elif counter+2 == 5:
@@ -107,7 +111,7 @@ class MainViewHandler():
         anim4 = Animation(angle = 3, duration = .5)
         anim3.start(Mainscreenvar.ids[card2_to_edit].children[0])
         anim4.start(Mainscreenvar.ids[card2_to_edit].canvas.before.children[-1])
-
+        anim4.bind(on_complete = partial(MainViewHandler.vibration_handler, self, 0.01))
         new_card_id = "ele{}".format(counter)
         new_card = Mainscreenvar.ids[new_card_id]
         new_card_blueprint = ListBlueprint()
@@ -181,6 +185,12 @@ class MainViewHandler():
             connection.commit()
 
 
+    def vibration_handler(self,value,caller,anim_object):
+        try:
+            plyer.vibrator.vibrate(value)
+        except:
+            pass
+
 class OpenListView():
 
     def list_view_loader_transition(self, caller):
@@ -197,7 +207,7 @@ class OpenListView():
 
 
     def list_view_loader(self,anim_object,caller):
-        global swiping
+        global swiping, current_app_location
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         name = 'ele{}'.format(counter)
         self.test = Button(on_press = partial(OpenListView.back_op,self), size_hint = (0.1,0.1))
@@ -207,10 +217,11 @@ class OpenListView():
         # Mainscreenvar.ids[name].children[0].add_widget(list_view_banner)
         Mainscreenvar.ids[name].children[0].add_widget(list_view_element)
         swiping = True
+        current_app_location = 'IndividualListView'
 
 
     def back_op(self, caller):
-        global swiping
+        global swiping, current_app_location
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         anim1 = Animation(size_hint = (.85,.70), radius=(60,60,60,60), duration = .5, t = 'in_out_circ')
         anim2 = Animation(pos_hint = {'center_x':.45, 'center_y':.5}, duration = .7, t = 'in_out_circ')
@@ -222,6 +233,7 @@ class OpenListView():
         Mainscreenvar.ids[name].children[0].clear_widgets()
         MainViewHandler.load_next_list_title(self)
         swiping = False
+        current_app_location = 'MainScreen'
 
 
 class Creator():
@@ -283,6 +295,20 @@ class Creator():
         MainViewHandler.slider(self,0, None)
 
 
+class AndroidHandler():
+
+    def back_operation_handler(self):
+        global current_app_location, back_counter
+        if current_app_location == 'IndividualListView':
+            OpenListView.back_op(self, None)
+        elif current_app_location == 'MainScreen':
+            if back_counter == 1:
+                toast("Press the back button once more to exit")
+                back_counter+=1
+
+            else:
+                self.stop()
+
 
 
 
@@ -327,6 +353,8 @@ class ListViewScreen(Screen):
 counter = 1
 all_lists = []
 swiping = False
+current_app_location = 'MainScreen'
+back_counter = 1
 
 class Mainapp(MDApp):
 
@@ -334,6 +362,7 @@ class Mainapp(MDApp):
         Builder.load_file("reminder.kv")
         self.data = {'alarm': 'New Reminder',
                 'format-list-checkbox': 'New List',}
+        Window.bind(on_keyboard=self.on_key)
         self.runner_object = Runner()
         return self.runner_object
 
@@ -346,6 +375,13 @@ class Mainapp(MDApp):
             pass
         elif instance.icon == 'format-list-checkbox':
             MainViewHandler.slider(self, 1, None)
+
+    def on_key(self, window, key, scancode, codepoint, modifier):
+        if key == 27:  # the esc key
+            AndroidHandler.back_operation_handler(self)
+            return True
+        else:
+            return False
 
 if platform != 'android':
     Window.size = (360,640)
