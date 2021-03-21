@@ -81,7 +81,7 @@ class MainViewHandler():
             anim1.start(Mainscreenvar.ids[card_to_drop].children[0])
             anim1.bind(on_complete = partial(MainViewHandler.swapper,self, operation))
             try:
-                plyer.vibrator.vibrate(0.03)
+                plyer.vibrator.vibrate(0.02)
             except:
                 pass
             Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
@@ -98,7 +98,6 @@ class MainViewHandler():
         anim2 = Animation(angle = 0, duration = .4)
         anim1.start(Mainscreenvar.ids[card1_to_edit].children[0])
         anim2.start(Mainscreenvar.ids[card1_to_edit].canvas.before.children[-1])
-        anim2.bind(on_complete = partial(MainViewHandler.vibration_handler, self, 0.02))
         if counter+2 == 4:
             card2_to_edit = 'ele1'
         elif counter+2 == 5:
@@ -111,7 +110,6 @@ class MainViewHandler():
         anim4 = Animation(angle = 3, duration = .5)
         anim3.start(Mainscreenvar.ids[card2_to_edit].children[0])
         anim4.start(Mainscreenvar.ids[card2_to_edit].canvas.before.children[-1])
-        anim4.bind(on_complete = partial(MainViewHandler.vibration_handler, self, 0.01))
         new_card_id = "ele{}".format(counter)
         new_card = Mainscreenvar.ids[new_card_id]
         new_card_blueprint = ListBlueprint()
@@ -292,7 +290,9 @@ class Creator():
         MainViewHandler.slider(self, 0, None)
 
     def cancel_new_list(self, instance):
+        self.action_button.opacity = 1
         MainViewHandler.slider(self,0, None)
+
 
 
 class AndroidHandler():
