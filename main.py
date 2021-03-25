@@ -2,6 +2,7 @@ from kivymd.app import MDApp
 from kivymd.uix.card import MDCard
 from kivymd.uix.button import MDFloatingActionButtonSpeedDial
 from kivymd.toast import toast
+from kivymd.uix.button import MDIconButton
 
 from kivy.core.window import Window
 from kivy.lang import Builder
@@ -17,7 +18,7 @@ from kivy.clock import Clock
 from kivy.properties import ObjectProperty, NumericProperty
 
 from kivy.uix.recycleview import RecycleView
-from kivy.uix.button import Button
+
 
 
 import gesture_box as gesture
@@ -205,17 +206,37 @@ class OpenListView():
 
 
     def list_view_loader(self,anim_object,caller):
-        global swiping, current_app_location
+        global swiping, current_app_location, current_list
+        current_list = all_lists[0]
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         name = 'ele{}'.format(counter)
-        self.test = Button(on_press = partial(OpenListView.back_op,self), size_hint = (0.1,0.1))
-        # list_view_banner = ListViewBanner()
-        list_view_element = ListViewBlueprint()
-        # Mainscreenvar.ids[name].children[0].add_widget(self.test)
-        # Mainscreenvar.ids[name].children[0].add_widget(list_view_banner)
-        Mainscreenvar.ids[name].children[0].add_widget(list_view_element)
+        self.list_view_element = ListViewBlueprint()
+        self.list_view_banner = ListViewBanner()
+        self.list_view_banner.ids.back_button.bind(on_press = partial(OpenListView.back_op, self))
+        self.list_view_banner.ids.list_title.text = current_list.replace("_", " ")
+        OpenListView.sort_by_creation(self)
+        Mainscreenvar.ids[name].children[0].add_widget(self.list_view_banner)
+        Mainscreenvar.ids[name].children[0].add_widget(self.list_view_element)
         swiping = True
         current_app_location = 'IndividualListView'
+
+    def sort_by_creation(self):
+        data = mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC".format(current_list))
+        reminders = []
+        for reminder in data:
+            if reminder[1] != None:
+                ele = {'text_title':reminder[0], 'text_description':reminder[1]}
+            else:
+                ele = {'text_title':reminder[0]}
+            reminders.append(ele)
+
+        self.list_view_element.data = reminders
+
+
+    def sort_by_date(self):
+        data = mycursor.execute("SELECT * FROM {}".format(current_list))
+
+
 
 
     def back_op(self, caller):
@@ -232,6 +253,7 @@ class OpenListView():
         MainViewHandler.load_next_list_title(self)
         swiping = False
         current_app_location = 'MainScreen'
+        self.list_view_element.clear_widgets()
 
 
 class Creator():
@@ -314,10 +336,6 @@ class AndroidHandler():
 
 
 
-
-class SelectableButton(Button):
-    pass
-
 class Runner(gesture.GestureBox):
     pass
 
@@ -352,6 +370,7 @@ class ListViewScreen(Screen):
 
 counter = 1
 all_lists = []
+current_list = None
 swiping = False
 current_app_location = 'MainScreen'
 back_counter = 1

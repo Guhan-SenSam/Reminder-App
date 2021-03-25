@@ -174,35 +174,90 @@
 
 <ListViewBanner>:
     elevation:10
-    md_bg_color:218/255,68/255,83/255,1
+    md_bg_color:44/250,62/250,80/250, 1
     pos_hint:{"center_x":.5, "center_y":.9}
     size_hint:1,0.1
+    radius:0,0,dp(40), dp(40)
+
+    FloatLayout:
+        size:self.parent.size
+        pos:self.parent.pos
+
+        MDIconButton:
+            id:back_button
+            icon:'arrow-left'
+            pos_hint:{"center_x":.1, "center_y":.5}
+
+        Label:
+            id:list_title
+            font_name:"Roboto-Bold.ttf"
+            font_size:"20sp"
+            text_size:root.width- dp(100), dp(20)
+            shorten:True
+            shorten_from:"right"
+            pos_hint:{"center_x":.5, "center_y":.5}
+            halign:'center'
 
 
 <ListViewBlueprint>:
     viewclass: 'IndivualReminderElementBlueprint'
-    data: [{"text": f"{i} {'test'*i**2}"} for i in range(20)]
+    data:
     RecycleBoxLayout:
         id: container
-        default_size: None, None
+        default_size: None, dp(80)
         default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
         orientation: 'vertical'
         spacing:'20dp'
+        padding: 10,10,10,0
 
 
 
 <IndivualReminderElementBlueprint@MDCard>:
+    text_title: ''
+    text_description:" "
     md_bg_color:218/255,68/255,83/255,1
+    radius:40,40,40,40
     size_hint: 1, None
-    text: ''
-    Label:
-        on_size: root.height = self.height
-        size_hint: 1, None
-        text_size: root.width, None
-        size: self.texture_size
-        text: root.text
+
+
+    MDCheckbox:
+        id:check_box
+        checkbox_icon_normal:"checkbox-blank-circle-outline"
+        checkbox_icon_down:"checkbox-marked-circle"
+        size: "40dp", "20dp"
+        size_hint:None, None
+        pos_hint:{'center_y':.65}
+
+    BoxLayout:
+        padding:10,0,0,0
+        orientation:"vertical"
+        size_hint:None, None
+        separation:'30dp'
+
+        Label:
+            id:title
+            text:root.text_title
+            size_hint:None,None
+            size:self.texture_size
+            text_size:self.parent.parent.width-dp(70), dp(20)
+            font_name:"Roboto-Medium.ttf"
+            font_size:"18sp"
+            shorten:True
+            shorten_from:"right"
+        Label:
+            id:desc
+            text:root.text_description
+            size_hint:None,None
+            size:self.texture_size
+            text_size:self.parent.parent.width-dp(70), dp(40)
+            font_name:"Roboto-Regular.ttf"
+            color:1,1,1,0.5
+            font_size:"14sp"
+            split_str:' '
+            valign:"top"
+
 
 
 
