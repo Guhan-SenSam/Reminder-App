@@ -217,6 +217,7 @@
 <IndivualReminderElementBlueprint@MDCard>:
     text_title: ''
     text_description:" "
+    completed:False
     md_bg_color:218/255,68/255,83/255,1
     radius:40,40,40,40
     size_hint: 1, None
@@ -229,6 +230,7 @@
         size: "40dp", "20dp"
         size_hint:None, None
         pos_hint:{'center_y':.65}
+        active:root.completed
 
     BoxLayout:
         padding:10,0,0,0

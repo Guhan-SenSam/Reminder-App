@@ -26,6 +26,7 @@ from functools import partial
 import sqlite3
 import collections
 import plyer
+import threading
 
 from time import time
 import re
@@ -134,12 +135,12 @@ class MainViewHandler():
             ele = collections.deque(all_lists)
             ele.rotate(-1)
             all_lists = ele
-            Clock.schedule_once(partial(MainViewHandler.load_next_list_title,self),.2)
+            Clock.schedule_once(partial(MainViewHandler.load_next_list_title,self, 0),.2)
         elif operation == 1:
             swiping = False
             Creator.create_new_list_load_ui(self)
 
-    def load_next_list_title(self, *args):
+    def load_next_list_title(self, delay, *args):
         mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC LIMIT 6".format(all_lists[0]))
         data = mycursor.fetchall()
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
@@ -148,7 +149,10 @@ class MainViewHandler():
         self.list_content.ids.heading.text = all_lists[0].replace('_', ' ')
         self.list_content.ids.view_button.bind(on_press = partial(OpenListView.list_view_loader_transition, self))
         Mainscreenvar.ids[card_to_add_to].children[0].add_widget(self.list_content)
-        event = Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data), .2)
+        if delay == 0:
+            event = Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data), .2)
+        else:
+            event = Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders, self, data), delay)
 
 
     def load_next_list_reminders(self, data, *args):
@@ -163,10 +167,10 @@ class MainViewHandler():
                 list_reminder_element.ids.desc.text = data[0][1]
 
             self.list_content.ids.reminder_container.add_widget(list_reminder_element)
-            anim1 = Animation(opacity= 1, duration = .3, )
+            anim1 = Animation(opacity= 1, duration = .1, )
             anim1.start(list_reminder_element)
             del data[0]
-            Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data), .15)
+            Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data), .1)
         else:
             swiping = False
 
@@ -193,6 +197,8 @@ class MainViewHandler():
 class OpenListView():
 
     def list_view_loader_transition(self, caller):
+        global current_list
+        current_list = all_lists[0]
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         anim1 = Animation(size_hint = (1,1), radius=(0,0,0,0), duration = .5, t = 'in_out_circ')
         anim2 = Animation(pos_hint = {'center_x':.5, 'center_y':-2}, duration = .7, t = 'in_out_circ')
@@ -203,34 +209,55 @@ class OpenListView():
         anim3.start(Mainscreenvar.children[3].children[0])
         name = 'ele{}'.format(counter)
         Mainscreenvar.ids[name].children[0].clear_widgets()
+        threading.Thread(target = partial(OpenListView.sort_by_creation, self), name = 'loader').start()
+
 
 
     def list_view_loader(self,anim_object,caller):
-        global swiping, current_app_location, current_list
-        current_list = all_lists[0]
+        global swiping, current_app_location
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         name = 'ele{}'.format(counter)
-        self.list_view_element = ListViewBlueprint()
         self.list_view_banner = ListViewBanner()
         self.list_view_banner.ids.back_button.bind(on_press = partial(OpenListView.back_op, self))
         self.list_view_banner.ids.list_title.text = current_list.replace("_", " ")
-        OpenListView.sort_by_creation(self)
         Mainscreenvar.ids[name].children[0].add_widget(self.list_view_banner)
         Mainscreenvar.ids[name].children[0].add_widget(self.list_view_element)
         swiping = True
         current_app_location = 'IndividualListView'
 
     def sort_by_creation(self):
-        data = mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC".format(current_list))
-        reminders = []
-        for reminder in data:
-            if reminder[1] != None:
-                ele = {'text_title':reminder[0], 'text_description':reminder[1]}
-            else:
-                ele = {'text_title':reminder[0]}
-            reminders.append(ele)
+        connection = sqlite3.connect('reminder.db')
+        mycursor = connection.cursor()
+        mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC".format(current_list))
+        data = mycursor.fetchall()
+        completed_reminders = []
+        for a in data:
+            if a[6] == 1:
+                completed_reminders.append(a)
+                data.remove(a)
+        data.extend(completed_reminders)
+        self.list_view_element = ListViewBlueprint()
+        reminders_data_list = []
+        print(completed_reminders)
+        # for reminder in data:
+        #     if reminder[1] != None:
+        #         if reminder[6] == 0:
+        #             ele = {'text_title':reminder[0], 'text_description':reminder[1],
+        #                     'md_bg_color':(0,0,0,0), 'elevation':0}
+        #         elif reminder[6] == 1:
+        #             ele = {'text_title':reminder[0], 'text_description':reminder[1],
+        #                     'md_bg_color':(0,0,0,0), 'elevation':0, 'completed':True}
+        #     else:
+        #         if reminder[6] == 0:
+        #             ele = {'text_title':reminder[0],
+        #                     'md_bg_color':(0,0,0,0), 'elevation':0}
+        #         elif reminder[6] == 1:
+        #             ele = {'text_title':reminder[0],
+        #                     'md_bg_color':(0,0,0,0), 'elevation':0, 'completed':True}
+        #     reminders_data_list.append(ele)
 
-        self.list_view_element.data = reminders
+        self.list_view_element.data = reminders_data_list
+        connection.close()
 
 
     def sort_by_date(self):
@@ -241,6 +268,7 @@ class OpenListView():
 
     def back_op(self, caller):
         global swiping, current_app_location
+        self.list_view_element.clear_widgets()
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         anim1 = Animation(size_hint = (.85,.70), radius=(60,60,60,60), duration = .5, t = 'in_out_circ')
         anim2 = Animation(pos_hint = {'center_x':.45, 'center_y':.5}, duration = .7, t = 'in_out_circ')
@@ -250,10 +278,11 @@ class OpenListView():
         anim2.start(Mainscreenvar.children[2].children[0])
         anim3.start(Mainscreenvar.children[3].children[0])
         Mainscreenvar.ids[name].children[0].clear_widgets()
-        MainViewHandler.load_next_list_title(self)
-        swiping = False
+        MainViewHandler.load_next_list_title(self, 1)
         current_app_location = 'MainScreen'
-        self.list_view_element.clear_widgets()
+
+
+
 
 
 class Creator():
