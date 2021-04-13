@@ -165,7 +165,9 @@ class MainViewHandler():
             list_reminder_element.name = data[0][4]
             if data[0][1] != None:
                 list_reminder_element.ids.desc.text = data[0][1]
-
+            if data[0][6] == 1:
+                list_reminder_element.completed = True
+                list_reminder_element.ids.title.strikethrough = True
             self.list_content.ids.reminder_container.add_widget(list_reminder_element)
             anim1 = Animation(opacity= 1, duration = .1, )
             anim1.start(list_reminder_element)
@@ -176,12 +178,14 @@ class MainViewHandler():
 
 
     def reminder_complete_handler(self, instance):
-        if instance.parent.ids.title.strikethrough == False:
+        if instance.parent.completed == False:
+            instance.parent.completed = True
             instance.parent.ids.title.strikethrough = True
             instance.parent.ids.desc.strikethrough = True
             mycursor.execute("UPDATE {} SET state = 1 WHERE creation_order = {}".format(all_lists[0], instance.parent.name))
             connection.commit()
         else:
+            instance.parent.completed = False
             instance.parent.ids.title.strikethrough = False
             instance.parent.ids.desc.strikethrough = False
             mycursor.execute("UPDATE {} SET state = 0 WHERE creation_order = {}".format(all_lists[0], instance.parent.name))
@@ -231,31 +235,55 @@ class OpenListView():
         mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC".format(current_list))
         data = mycursor.fetchall()
         completed_reminders = []
-        for a in data:
-            if a[6] == 1:
-                completed_reminders.append(a)
-                data.remove(a)
-        data.extend(completed_reminders)
+        not_completed_reminders = []
+        for a in range(len(data)):
+            if data[0][6] == 1 or data[0][6] == '1':
+                ele = data.pop(0)
+                completed_reminders.append(ele)
+            else:
+                ele = data.pop(0)
+                not_completed_reminders.append(ele)
+        data = not_completed_reminders + completed_reminders
         self.list_view_element = ListViewBlueprint()
         reminders_data_list = []
-        print(completed_reminders)
-        # for reminder in data:
-        #     if reminder[1] != None:
-        #         if reminder[6] == 0:
-        #             ele = {'text_title':reminder[0], 'text_description':reminder[1],
-        #                     'md_bg_color':(0,0,0,0), 'elevation':0}
-        #         elif reminder[6] == 1:
-        #             ele = {'text_title':reminder[0], 'text_description':reminder[1],
-        #                     'md_bg_color':(0,0,0,0), 'elevation':0, 'completed':True}
-        #     else:
-        #         if reminder[6] == 0:
-        #             ele = {'text_title':reminder[0],
-        #                     'md_bg_color':(0,0,0,0), 'elevation':0}
-        #         elif reminder[6] == 1:
-        #             ele = {'text_title':reminder[0],
-        #                     'md_bg_color':(0,0,0,0), 'elevation':0, 'completed':True}
-        #     reminders_data_list.append(ele)
+        count = 0
+        for reminder in data:
+            if reminder[1] != None:
+                if reminder[6] == 0:
+                    ele = {'text_title':reminder[0], 'text_description':reminder[1],
+                            'md_bg_color':(0,0,0,0), 'elevation':0}
 
+                elif reminder[6] == 1 and count == 0:
+                    heading_ele = {'text_title':'Completed Reminders',
+                            'md_bg_color':(218/255,68/255,83/255, 1), 'elevation':12,
+                            'show_button':0,'padding':(50,0,50,0), 'alignment':'center',}
+                    reminders_data_list.append(heading_ele)
+                    ele = {'text_title':reminder[0], 'text_description':reminder[1],
+                            'md_bg_color':(0,0,0,0), 'elevation':0,'completed':True}
+                    count = 1
+
+                elif reminder[6] == 1 and count == 1:
+                    ele = {'text_title':reminder[0], 'text_description':reminder[1],
+                            'md_bg_color':(0,0,0,0), 'elevation':0,'completed':True}
+
+            else:
+                if reminder[6] == 0:
+                    ele = {'text_title':reminder[0],
+                            'md_bg_color':(0,0,0,0), 'elevation':0}
+
+                elif reminder[6] == 1 and count == 0:
+                    heading_ele = {'text_title':'Completed Reminders',
+                            'md_bg_color':(218/255,68/255,83/255, 1), 'elevation':12,
+                            'show_button':0, 'padding':(50,0,50,0), 'alignment':'center',}
+                    reminders_data_list.append(heading_ele)
+                    ele = {'text_title':reminder[0],
+                            'md_bg_color':(0,0,0,0), 'elevation':0, 'completed':True}
+                    count = 1
+
+                elif reminder[6] == 1 and count == 1:
+                    ele = {'text_title':reminder[0],
+                            'md_bg_color':(0,0,0,0), 'elevation':0, 'completed':True}
+            reminders_data_list.append(ele)
         self.list_view_element.data = reminders_data_list
         connection.close()
 
@@ -268,7 +296,6 @@ class OpenListView():
 
     def back_op(self, caller):
         global swiping, current_app_location
-        self.list_view_element.clear_widgets()
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         anim1 = Animation(size_hint = (.85,.70), radius=(60,60,60,60), duration = .5, t = 'in_out_circ')
         anim2 = Animation(pos_hint = {'center_x':.45, 'center_y':.5}, duration = .7, t = 'in_out_circ')
@@ -278,8 +305,10 @@ class OpenListView():
         anim2.start(Mainscreenvar.children[2].children[0])
         anim3.start(Mainscreenvar.children[3].children[0])
         Mainscreenvar.ids[name].children[0].clear_widgets()
-        MainViewHandler.load_next_list_title(self, 1)
         current_app_location = 'MainScreen'
+        MainViewHandler.load_next_list_title(self, 1)
+
+
 
 
 
@@ -412,6 +441,7 @@ class Mainapp(MDApp):
                 'format-list-checkbox': 'New List',}
         Window.bind(on_keyboard=self.on_key)
         self.runner_object = Runner()
+        self.ran = 0
         return self.runner_object
 
 
