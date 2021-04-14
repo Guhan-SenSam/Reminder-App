@@ -204,7 +204,7 @@
     data:
     RecycleBoxLayout:
         id: container
-        default_size:None,None
+        default_size: None, dp(80)
         default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
@@ -214,7 +214,7 @@
 
 
 
-<IndivualReminderElementBlueprint@MDCard>:
+<IndivualReminderElementBlueprint@BoxLayout>:
     text_title: ''
     text_description:" "
     completed:False
@@ -222,48 +222,50 @@
     elevation:0
     alignment:'left'
     padding:0,0,0,0
-    radius:40,40,40,40
-    size_hint:1,None
+    MDCard:
+        md_bg_color:root.md_bg_color
+        elevation:root.elevation
+        radius:40,40,40,40
 
 
-    MDCheckbox:
-        id:check_box
-        checkbox_icon_normal:"checkbox-blank-circle-outline"
-        checkbox_icon_down:"checkbox-marked-circle"
-        size: "60dp", "60dp"
-        size_hint:None, None
-        pos_hint:{'center_y':.5}
-        active:root.completed
-        opacity:root.show_button
+        MDCheckbox:
+            id:check_box
+            checkbox_icon_normal:"checkbox-blank-circle-outline"
+            checkbox_icon_down:"checkbox-marked-circle"
+            size: "60dp", "60dp"
+            size_hint:None, None
+            pos_hint:{'center_y':.5}
+            active:root.completed
+            opacity:root.show_button
 
+        BoxLayout:
+            padding:10,0,0,0
+            orientation:"vertical"
+            size_hint:1,1
+            separation:'20dp'
 
-    BoxLayout:
-        id:layout
-        padding:10,0,0,0
-        orientation:"vertical"
-        separation:'20dp'
-
-        Label:
-            id:title
-            text:root.text_title
-            size_hint:1,None
-            size:self.texture_size
-            text_size:self.parent.parent.width-dp(70),None
-            font_name:"Roboto-Medium.ttf"
-            font_size:"18sp"
-
-
-        Label:
-            id:desc
-            text:root.text_description
-            size_hint:None,None
-            size:self.texture_size
-            text_size:self.parent.parent.width-dp(70), None
-            font_name:"Roboto-Regular.ttf"
-            color:1,1,1,0.5
-            font_size:"16sp"
-            valign:"top"
-
+            Label:
+                id:title
+                text:root.text_title
+                size_hint:None,None
+                size:self.texture_size
+                text_size:self.parent.parent.width-dp(70), dp(20)
+                font_name:"Roboto-Medium.ttf"
+                font_size:"18sp"
+                shorten:True
+                shorten_from:"right"
+                halign:root.alignment
+            Label:
+                id:desc
+                text:root.text_description
+                size_hint:None,None
+                size:self.texture_size
+                text_size:self.parent.parent.width-dp(70), dp(40)
+                font_name:"Roboto-Regular.ttf"
+                color:1,1,1,0.5
+                font_size:"16sp"
+                split_str:' '
+                valign:"top"
 
 
 <NewListBlueprint>:
