@@ -87,7 +87,6 @@
     size_hint:1,None
     height:self.minimum_height
     orientation:'horizontal'
-    completed:False
     MDCheckbox:
         id:check_box
         checkbox_icon_normal:"checkbox-blank-circle-outline"
@@ -95,7 +94,6 @@
         size: "20dp", "20dp"
         size_hint:None, None
         pos_hint:{'center_x':.5, 'center_y':.75}
-        active:root.completed
 
     BoxLayout:
         orientation:"vertical"
@@ -211,8 +209,8 @@
         size_hint_y: None
         height: self.minimum_height
         orientation: 'vertical'
+        spacing:'20dp'
         padding: 10,10,10,0
-        spacing:'5dp'
 
 
 
@@ -220,7 +218,6 @@
     text_title: ''
     text_description:" "
     completed:False
-    show_button:1
     md_bg_color:218/255,68/255,83/255,1
     elevation:0
     alignment:'left'
