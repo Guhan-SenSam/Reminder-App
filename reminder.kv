@@ -200,6 +200,11 @@
             pos_hint:{"center_x":.5, "center_y":.5}
             halign:'center'
 
+        MDIconButton:
+            id:delete_button
+            icon:'delete'
+            pos_hint:{"center_x":.9, "center_y":.5}
+
 
 <ListViewBlueprint>:
     viewclass: 'IndivualReminderElementBlueprint'
@@ -225,6 +230,8 @@
     elevation:0
     alignment:'left'
     padding:0,0,0,0
+    font:'Roboto-Medium.ttf'
+    fontsize:'18sp'
     MDCard:
         md_bg_color:root.md_bg_color
         elevation:root.elevation
@@ -253,8 +260,8 @@
                 size_hint:None,None
                 size:self.texture_size
                 text_size:self.parent.parent.width-dp(70), dp(20)
-                font_name:"Roboto-Medium.ttf"
-                font_size:"18sp"
+                font_name:root.font
+                font_size:root.fontsize
                 shorten:True
                 shorten_from:"right"
                 halign:root.alignment

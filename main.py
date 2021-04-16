@@ -1,3 +1,6 @@
+from kivy.config import Config
+Config.set('modules', 'monitor', ' ')
+Config.set('graphics', 'maxfps', '80')
 from kivymd.app import MDApp
 from kivymd.uix.card import MDCard
 from kivymd.uix.button import MDFloatingActionButtonSpeedDial
@@ -11,15 +14,12 @@ from kivy.uix.screenmanager import Screen, ScreenManager, FallOutTransition
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.relativelayout import RelativeLayout
-from kivy.uix.stacklayout import StackLayout
 from kivy.animation import Animation
 from kivy.properties import NumericProperty
 from kivy.clock import Clock
 from kivy.properties import ObjectProperty, NumericProperty
 
 from kivy.uix.recycleview import RecycleView
-
-
 
 import gesture_box as gesture
 from functools import partial
@@ -38,17 +38,21 @@ mycursor = connection.cursor()
 
 class MainViewHandler():
 
-    def program_loader(self):
+    def all_lists_loader(self, mode):
         global all_lists
         mycursor.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
         data = mycursor.fetchall()
+        all_lists = []
         for a in data:
             if a[0] == 'sqlite_sequence':
                 pass
             else:
                 all_lists.append(a[0])
         all_lists.sort()
-        MainViewHandler.first_list_loader(self)
+        if mode==0:
+            MainViewHandler.first_list_loader(self)
+        elif mode == 1:
+            pass
 
 
 
@@ -68,6 +72,8 @@ class MainViewHandler():
             self.list_reminder_element.name = a[4]
             if a[1] != None:
                 self.list_reminder_element.ids.desc.text = a[1]
+            if a[6] == 1:
+                self.list_reminder_element.completed = True
             self.list_content.ids.reminder_container.add_widget(self.list_reminder_element)
 
         self.action_button = DoActionButton()
@@ -169,10 +175,10 @@ class MainViewHandler():
                 list_reminder_element.completed = True
                 list_reminder_element.ids.title.strikethrough = True
             self.list_content.ids.reminder_container.add_widget(list_reminder_element)
-            anim1 = Animation(opacity= 1, duration = .1, )
+            anim1 = Animation(opacity= 1, duration = .2, )
             anim1.start(list_reminder_element)
             del data[0]
-            Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data), .1)
+            Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data), .15)
         else:
             swiping = False
 
@@ -223,6 +229,7 @@ class OpenListView():
         name = 'ele{}'.format(counter)
         self.list_view_banner = ListViewBanner()
         self.list_view_banner.ids.back_button.bind(on_press = partial(OpenListView.back_op, self))
+        self.list_view_banner.ids.delete_button.bind(on_press = partial(OpenListView.list_deleter, self))
         self.list_view_banner.ids.list_title.text = current_list.replace("_", " ")
         Mainscreenvar.ids[name].children[0].add_widget(self.list_view_banner)
         Mainscreenvar.ids[name].children[0].add_widget(self.list_view_element)
@@ -256,7 +263,8 @@ class OpenListView():
                 elif reminder[6] == 1 and count == 0:
                     heading_ele = {'text_title':'Completed Reminders',
                             'md_bg_color':(218/255,68/255,83/255, 1), 'elevation':12,
-                            'show_button':0,'padding':(50,0,50,0), 'alignment':'center',}
+                            'show_button':0,'padding':(50,0,50,0), 'alignment':'center',
+                            'font':'Roboto-Black.ttf', 'fontsize':'22sp'}
                     reminders_data_list.append(heading_ele)
                     ele = {'text_title':reminder[0], 'text_description':reminder[1],
                             'md_bg_color':(0,0,0,0), 'elevation':0,'completed':True}
@@ -274,7 +282,8 @@ class OpenListView():
                 elif reminder[6] == 1 and count == 0:
                     heading_ele = {'text_title':'Completed Reminders',
                             'md_bg_color':(218/255,68/255,83/255, 1), 'elevation':12,
-                            'show_button':0, 'padding':(50,0,50,0), 'alignment':'center',}
+                            'show_button':0, 'padding':(50,0,50,0), 'alignment':'center',
+                            'font':'Roboto-Black.ttf', 'fontsize':'22sp'}
                     reminders_data_list.append(heading_ele)
                     ele = {'text_title':reminder[0],
                             'md_bg_color':(0,0,0,0), 'elevation':0, 'completed':True}
@@ -294,7 +303,7 @@ class OpenListView():
 
 
 
-    def back_op(self, caller):
+    def back_op(self,caller):
         global swiping, current_app_location
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
         anim1 = Animation(size_hint = (.85,.70), radius=(60,60,60,60), duration = .5, t = 'in_out_circ')
@@ -307,6 +316,13 @@ class OpenListView():
         Mainscreenvar.ids[name].children[0].clear_widgets()
         current_app_location = 'MainScreen'
         MainViewHandler.load_next_list_title(self, 1)
+
+
+
+    def list_deleter(self, caller):
+        mycursor.execute("DROP TABLE {}".format(current_list))
+        MainViewHandler.all_lists_loader(self, 1)
+        OpenListView.back_op(self,None)
 
 
 
@@ -349,6 +365,9 @@ class Creator():
 
         else:
             toast("Please enter a proper list name")
+            plyer.vibrator.vibrate(0.02)
+            Clock.schedule_once(partial(plyer.vibrator.vibrate, 0.04), 0.06)
+            Clock.schedule_once(partial(plyer.vibrator.vibrate, 0.02), 0.1)
 
     def reset_list_create(self, new_name):
         Mainscreenvar = self.runner_object.ids.screen_manager.get_screen("MainScreen")
@@ -446,7 +465,7 @@ class Mainapp(MDApp):
 
 
     def on_start(self):
-        MainViewHandler.program_loader(self)
+        MainViewHandler.all_lists_loader(self, 0)
 
     def plus_button_callback(self, instance):
         if instance.icon == 'alarm':
@@ -463,5 +482,4 @@ class Mainapp(MDApp):
 
 if platform != 'android':
     Window.size = (360,640)
-
 Mainapp().run()
