@@ -1,16 +1,7 @@
 #:import wd kivy.core.window.Window
-
-
-
-<Runner>:
-    ScreenManager:
-        id:screen_manager
-        MainScreen:
-            name:"MainScreen"
-        ListViewScreen:
-            name:"ListViewScreen"
-
-
+#:import CardTransition kivy.uix.screenmanager.CardTransition
+<ScreenManagerMain>:
+    transiton:CardTransition()
 
 <MainScreen>:
     canvas:
@@ -38,7 +29,7 @@
             md_bg_color:90/255,89/255,101/255,1
 
 
-    FloatLayout:
+    RelativeLayout:
         size:self.size
         pos:self.pos
         id:ele2
@@ -55,7 +46,7 @@
             size_hint:.78,.70
             md_bg_color:70/255,69/255,81/255,1
 
-    FloatLayout:
+    RelativeLayout:
         size:self.size
         pos:self.pos
         id:ele1
@@ -73,7 +64,7 @@
             size_hint:.85,.70
             pos_hint:{'center_x':.5, "center_y":.5}
 
-<ListViewScreen>:
+<ReminderScreen>:
     canvas:
         Color:
             rgba:50/255,49/255,61/255,1
@@ -81,52 +72,77 @@
             size:self.size
             pos:self.pos
 
+    MDIconButton:
+        id:back_button
+        icon:'arrow-left'
+        pos_hint:{'center_x':.1, "center_y":.94}
 
-<ListReminderElement>:
-    name:
-    size_hint:1,None
-    height:self.minimum_height
-    orientation:'horizontal'
-    completed:False
-    MDCheckbox:
-        id:check_box
-        checkbox_icon_normal:"checkbox-blank-circle-outline"
-        checkbox_icon_down:"checkbox-marked-circle"
-        size: "20dp", "20dp"
-        size_hint:None, None
-        pos_hint:{'center_x':.5, 'center_y':.75}
-        active:root.completed
-
-    BoxLayout:
-        orientation:"vertical"
-        size_hint:None, None
-        height:self.minimum_height
-        separation:'30dp'
+    ScrollView:
+        size_hint:1, None
+        width:wd.width-dp(20)
+        height:wd.height-dp(100)
+        pos:self.parent.pos
+        GridLayout:
+            id:container
+            pos:self.parent.pos
+            size_hint_y:None
+            height:self.minimum_height
+            cols:1
+            padding:30,0,30,0
+            spacing:'20dp'
 
 
-        Label:
-            id:title
-            text:
-            size_hint:None,None
-            size:self.texture_size
-            text_size:self.parent.parent.width, dp(20)
-            padding:("10dp", "0dp")
-            font_name:"Roboto-Medium.ttf"
-            font_size:"18sp"
-            shorten:True
-            shorten_from:"right"
-        Label:
-            id:desc
-            text:
-            size_hint:None,None
-            padding:("10dp", "0dp")
-            size:self.texture_size
-            text_size:self.parent.parent.width, dp(40)
-            font_name:"Roboto-Regular.ttf"
-            color:1,1,1,0.5
-            font_size:"14sp"
-            split_str:' '
+<ReminderTitleBlueprint>:
+    radius:60,60,60,60
+    md_bg_color: 218/255,68/255,83/255, 1
+    elevation:10
+    size_hint:1, None
+    orientation:'vertical'
 
+    MDTextField:
+        id:heading
+        text:
+        pos_hint:{'center_x':.5, "center_y":.5}
+        size_hint:None,None
+        width:self.parent.width - dp(50)
+        on_size:root.height = self.height
+        font_name:'Roboto-Black.ttf'
+        font_size:'25sp'
+        multiline:True
+        color_mode: 'custom'
+        line_color_focus: 1,1,1,1
+
+<ReminderDescriptionBlueprint>:
+    radius:40,40,40,40
+    md_bg_color: 44/250,62/250,80/250, 1
+    elevation:10
+    size_hint:1, None
+    orientation:'vertical'
+
+    Label:
+        id:label
+        text:'Description:'
+        size: self.texture_size
+        size_hint:None,None
+        pos_hint:{'center_x':.25, "center_y":.5}
+        font_name:'Roboto-Black.ttf'
+        font_size:'20sp'
+
+
+
+
+    MDTextField:
+        id:description
+        text:
+        pos_hint:{'center_x':.5, "center_y":.5}
+        size_hint:None,None
+        width:self.parent.width - dp(50)
+        on_size:root.height = self.height + self.parent.ids.label.height*2
+        font_name:'Roboto-Medium.ttf'
+        font_size:'18sp'
+        multiline:True
+        color_mode: 'custom'
+        line_color_focus: 1,1,1,1
 
 
 
@@ -165,6 +181,51 @@
         size_hint:1,.80
         padding:(30,20,20,20)
         spacing:'20dp'
+
+<ListReminderElement>:
+    name:
+    size_hint:1,None
+    height:self.minimum_height
+    orientation:'horizontal'
+    completed:False
+    MDCheckbox:
+        id:check_box
+        checkbox_icon_normal:"checkbox-blank-circle-outline"
+        checkbox_icon_down:"checkbox-marked-circle"
+        size: "20dp", "20dp"
+        size_hint:None, None
+        pos_hint:{'top':1}
+        active:root.completed
+
+    BoxLayout:
+        orientation:"vertical"
+        size_hint:None, None
+        height:self.minimum_height
+        separation:'30dp'
+
+
+        Label:
+            id:title
+            text:
+            size_hint:None,None
+            size:self.texture_size
+            text_size:self.parent.parent.width, dp(20)
+            padding:("10dp", "0dp")
+            font_name:"Roboto-Medium.ttf"
+            font_size:"18sp"
+            shorten:True
+            shorten_from:"right"
+        Label:
+            id:desc
+            text:
+            size_hint:None,None
+            padding:("10dp", "0dp")
+            size:self.texture_size
+            text_size:self.parent.parent.width, dp(40)
+            font_name:"Roboto-Regular.ttf"
+            color:1,1,1,0.5
+            font_size:"14sp"
+            split_str:' '
 
 
 <ListBlueprint>:
@@ -209,7 +270,7 @@
 <ListViewBlueprint>:
     viewclass: 'IndivualReminderElementBlueprint'
     data:
-    RecycleBoxLayout:
+    SelectableRecycleBoxLayout:
         id: container
         default_size: None, dp(80)
         default_size_hint: 1, None
@@ -221,9 +282,11 @@
 
 
 
-<IndivualReminderElementBlueprint@BoxLayout>:
+
+<IndivualReminderElementBlueprint>:
     text_title: ''
     text_description:" "
+    name:
     completed:False
     show_button:1
     md_bg_color:218/255,68/255,83/255,1
