@@ -344,8 +344,10 @@ class IndividualReminderView():
         reminder_data = mycursor.fetchone()
         heading = ReminderTitleBlueprint()
         description = ReminderDescriptionBlueprint()
+        timing = ReminderTimingBlueprint()
         heading.opacity = 0
         description.opacity = 0
+        timing.opacity = 1
         heading.ids.heading.text = reminder_data[0]
         if reminder_data[1]:
             description.ids.description.text = reminder_data[1]
@@ -354,6 +356,7 @@ class IndividualReminderView():
 
         Remindervar.ids.container.add_widget(heading)
         Remindervar.ids.container.add_widget(description)
+        Remindervar.ids.container.add_widget(timing)
         anim1 = Animation(opacity = 1, duration = .5, t = 'in_out_circ')
         anim1.start(heading)
         anim2 = Animation(duration = .3)
@@ -466,13 +469,16 @@ class ListViewBlueprint(RecycleView):
     pass
 
 class IndivualReminderElementBlueprint(BoxLayout):
-    def on_touch_up(self, touch):
-        print('ran')
+    def on_touch_down(self, touch):
         if super(IndivualReminderElementBlueprint, self).on_touch_down(touch):
             if not self.ids.check_box.collide_point(*touch.pos):
                 app = MDApp.get_running_app()
                 sm.transition.direction = 'left'
                 IndividualReminderView.screen_loader(app,self.name)
+
+
+
+
 
 class IndividualListViewContentBlueprint(BoxLayout):
     pass
@@ -497,6 +503,9 @@ class ReminderTitleBlueprint(MDCard):
     pass
 
 class ReminderDescriptionBlueprint(MDCard):
+    pass
+
+class ReminderTimingBlueprint(MDCard):
     pass
 
 class ScreenManagerMain(ScreenManager, gesture.GestureBox):

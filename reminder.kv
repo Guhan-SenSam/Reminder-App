@@ -129,8 +129,6 @@
         font_size:'20sp'
 
 
-
-
     MDTextField:
         id:description
         text:
@@ -143,6 +141,23 @@
         multiline:True
         color_mode: 'custom'
         line_color_focus: 1,1,1,1
+
+<ReminderTimingBlueprint>:
+    radius:40,40,40,40
+    md_bg_color:70/255,69/255,81/255,1
+    elevation:10
+    size_hint:1, None
+    orientation:'vertical'
+
+    BoxLayout:
+        orientation:'vertical'
+        height:self.minimum_height
+        on_size:root.height = self.minimum_height
+        size_hint:0.5,None
+
+    Button:
+    Button:
+
 
 
 
