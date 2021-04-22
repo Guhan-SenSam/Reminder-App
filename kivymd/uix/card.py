@@ -32,7 +32,7 @@ MDCard
     from kivymd.app import MDApp
 
     KV = '''
-    Screen:
+    MDScreen:
 
         MDCard:
             size_hint: None, None
@@ -61,7 +61,7 @@ Add content to card:
     from kivymd.app import MDApp
 
     KV = '''
-    Screen:
+    MDScreen:
 
         MDCard:
             orientation: "vertical"
@@ -156,9 +156,9 @@ End full code
                 _no_ripple_effect: True
 
 
-    Screen:
+    MDScreen:
 
-        BoxLayout:
+        MDBoxLayout:
             orientation: "vertical"
             spacing: "10dp"
 
@@ -167,6 +167,7 @@ End full code
                 title: "MDCardSwipe"
 
             ScrollView:
+                scroll_timeout : 100
 
                 MDList:
                     id: md_list
@@ -189,7 +190,7 @@ End full code
             return self.screen
 
         def on_start(self):
-           '''Creates a list of cards.'''
+            '''Creates a list of cards.'''
 
             for i in range(20):
                 self.screen.ids.md_list.add_widget(
@@ -215,7 +216,7 @@ Binding a swipe to one of the sides of the screen
     :align: center
 
 
-.. None:: You cannot use the left and right swipe at the same time.
+.. Note:: You cannot use the left and right swipe at the same time.
 
 Swipe behavior
 --------------
@@ -281,9 +282,9 @@ End full code
                 _no_ripple_effect: True
 
 
-    Screen:
+    MDScreen:
 
-        BoxLayout:
+        MDBoxLayout:
             orientation: "vertical"
             spacing: "10dp"
 
@@ -376,9 +377,9 @@ End full code
                 _no_ripple_effect: True
 
 
-    Screen:
+    MDScreen:
 
-        BoxLayout:
+        MDBoxLayout:
             orientation: "vertical"
             spacing: "10dp"
 
@@ -422,7 +423,7 @@ End full code
     :align: center
 
 Focus behavior
--------------
+--------------
 
 .. code-block:: kv
 
@@ -458,7 +459,7 @@ End full code
         on_release: self.icon = "star-outline" if self.icon == "star" else "star"
 
 
-    Screen:
+    MDScreen:
 
         MDCard:
             orientation: "vertical"
@@ -538,32 +539,35 @@ __all__ = (
     "MDSeparator",
 )
 
-from kivy.clock import Clock
 from kivy.animation import Animation
+from kivy.clock import Clock
 from kivy.lang import Builder
+from kivy.metrics import dp
 from kivy.properties import (
-    StringProperty,
-    ListProperty,
+    BooleanProperty,
+    ColorProperty,
     NumericProperty,
     OptionProperty,
-    BooleanProperty,
+    StringProperty,
 )
 from kivy.uix.boxlayout import BoxLayout
-from kivy.metrics import dp
 from kivy.uix.relativelayout import RelativeLayout
+from kivy.utils import get_color_from_hex
 
-from kivymd.uix.behaviors import (
-    RectangularElevationBehavior,
-    BackgroundColorBehavior,
-    RectangularRippleBehavior,
-    FocusBehavior,
-)
+from kivymd.color_definitions import colors
 from kivymd.theming import ThemableBehavior
+from kivymd.uix.behaviors import (
+    BackgroundColorBehavior,
+    FakeRectangularElevationBehavior,
+    FocusBehavior,
+    RectangularRippleBehavior,
+)
+from kivymd.uix.boxlayout import MDBoxLayout
 
 Builder.load_string(
     """
 <MDCardSwipeLayerBox>:
-    canvas:
+    canvas.before:
         Color:
             rgba: app.theme_cls.divider_color
         Rectangle:
@@ -572,38 +576,30 @@ Builder.load_string(
 
 
 <MDCard>
-    name: self.name
-    canvas:
+    canvas.before:
         Color:
             rgba: self.md_bg_color
         RoundedRectangle:
             size: self.size
             pos: self.pos
-            radius: [self.border_radius]
+            radius: root.radius
             source: root.background
 
 
-
 <MDSeparator>
-    canvas:
-        Color:
-            rgba:
-                self.theme_cls.divider_color if not root.color else root.color
-        Rectangle:
-            size: self.size
-            pos: self.pos
+    md_bg_color: self.theme_cls.divider_color if not root.color else root.color
 """
 )
 
 
-class MDSeparator(ThemableBehavior, BoxLayout):
+class MDSeparator(ThemableBehavior, MDBoxLayout):
     """A separator line."""
 
-    color = ListProperty()
+    color = ColorProperty(None)
     """Separator color in ``rgba`` format.
 
-    :attr:`color` is a :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`color` is a :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
     def __init__(self, **kwargs):
@@ -622,31 +618,12 @@ class MDSeparator(ThemableBehavior, BoxLayout):
 
 class MDCard(
     ThemableBehavior,
+    FakeRectangularElevationBehavior,
     BackgroundColorBehavior,
-    RectangularElevationBehavior,
+    RectangularRippleBehavior,
     FocusBehavior,
     BoxLayout,
-    RectangularRippleBehavior,
 ):
-
-    name = StringProperty()
-
-
-    border_radius = NumericProperty("60dp")
-    """
-    Card border radius.
-
-    :attr:`border_radius` is a :class:`~kivy.properties.NumericProperty`
-    and defaults to `'3dp'`.
-    """
-
-    background = StringProperty()
-    """
-    Background image path.
-
-    :attr:`background` is a :class:`~kivy.properties.StringProperty`
-    and defaults to `''`.
-    """
 
     focus_behavior = BooleanProperty(False)
     """
@@ -656,7 +633,7 @@ class MDCard(
     and defaults to `False`.
     """
 
-    ripple_behavior = BooleanProperty(True)
+    ripple_behavior = BooleanProperty(False)
     """
     Use ripple effect for card.
 
@@ -664,14 +641,41 @@ class MDCard(
     and defaults to `False`.
     """
 
+    elevation = NumericProperty(None, allownone=True)
+    """
+    Elevation value.
+
+    :attr:`elevation` is an :class:`~kivy.properties.NumericProperty`
+    and defaults to 1.
+    """
+
+    _bg_color_map = (
+        get_color_from_hex(colors["Light"]["CardsDialogs"]),
+        get_color_from_hex(colors["Dark"]["CardsDialogs"]),
+        [1.0, 1.0, 1.0, 0.0],
+    )
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.theme_cls.bind(theme_style=self.update_md_bg_color)
+        Clock.schedule_once(lambda x: self._on_elevation(self.elevation))
         Clock.schedule_once(
-            lambda x: self._on_ripple_behavior(0, self.ripple_behavior)
+            lambda x: self.on_ripple_behavior(0, self.ripple_behavior)
         )
+        self.update_md_bg_color(self, self.theme_cls.theme_style)
 
-    def _on_ripple_behavior(self, instance, value):
+    def update_md_bg_color(self, instance, value):
+        if self.md_bg_color in self._bg_color_map:
+            self.md_bg_color = get_color_from_hex(colors[value]["CardsDialogs"])
+
+    def on_ripple_behavior(self, instance, value):
         self._no_ripple_effect = False if value else True
+
+    def _on_elevation(self, value):
+        if value is None:
+            self.elevation = 6
+        else:
+            self.elevation = value
 
 
 class MDCardSwipe(RelativeLayout):
@@ -723,7 +727,7 @@ class MDCardSwipe(RelativeLayout):
     begins.
 
     :attr:`swipe_distance` is a :class:`~kivy.properties.NumericProperty`
-    and defaults to `10`.
+    and defaults to `50`.
     """
 
     opening_time = NumericProperty(0.2)

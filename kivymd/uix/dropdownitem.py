@@ -44,13 +44,13 @@ Usage
 __all__ = ("MDDropDownItem",)
 
 from kivy.lang import Builder
-from kivy.properties import StringProperty, NumericProperty
+from kivy.properties import NumericProperty, StringProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.widget import Widget
 
-from kivymd.uix.behaviors import RectangularRippleBehavior
-from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.theming import ThemableBehavior
+from kivymd.uix.behaviors import FakeRectangularElevationBehavior
+from kivymd.uix.boxlayout import MDBoxLayout
 
 Builder.load_string(
     """
@@ -61,9 +61,9 @@ Builder.load_string(
         Triangle:
             points:
                 [ \
-                self.right-14, self.y+7, \
-                self.right-7, self.y+7, \
-                self.right-7, self.y+14 \
+                self.right-dp(14), self.y+dp(7), \
+                self.right-dp(7), self.y+dp(7), \
+                self.right-dp(7), self.y+dp(14) \
                 ]
 
 
@@ -99,7 +99,10 @@ class _Triangle(ThemableBehavior, Widget):
 
 
 class MDDropDownItem(
-    ThemableBehavior, RectangularRippleBehavior, ButtonBehavior, MDBoxLayout
+    ThemableBehavior,
+    FakeRectangularElevationBehavior,
+    ButtonBehavior,
+    MDBoxLayout,
 ):
     text = StringProperty()
     """

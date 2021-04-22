@@ -25,7 +25,7 @@ Usage
     from kivymd.uix.dialog import MDDialog
 
     KV = '''
-    FloatLayout:
+    MDFloatLayout:
 
         MDFlatButton:
             text: "ALERT DIALOG"
@@ -64,24 +64,25 @@ Usage
 
 __all__ = ("MDDialog",)
 
+from kivy.clock import Clock
+from kivy.core.window import Window
 from kivy.lang import Builder
+from kivy.metrics import dp
 from kivy.properties import (
-    StringProperty,
-    NumericProperty,
+    ColorProperty,
     ListProperty,
-    OptionProperty,
+    NumericProperty,
     ObjectProperty,
+    OptionProperty,
+    StringProperty,
 )
 from kivy.uix.modalview import ModalView
-from kivy.metrics import dp
-from kivy.core.window import Window
 
+from kivymd.material_resources import DEVICE_TYPE
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.button import BaseButton
-from kivymd.uix.list import BaseListItem
 from kivymd.uix.card import MDSeparator
-from kivymd.material_resources import DEVICE_TYPE
-
+from kivymd.uix.list import BaseListItem
 
 Builder.load_string(
     """
@@ -91,25 +92,33 @@ Builder.load_string(
 <BaseDialog>
     background: '{}/transparent.png'.format(images_path)
 
+    canvas.before:
+        PushMatrix
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: root.radius
+        Scale:
+            origin: self.center
+            x: root._scale_x
+            y: root._scale_y
+    canvas.after:
+        PopMatrix
+
 
 <MDDialog>
-            
+
     MDCard:
         id: container
         orientation: "vertical"
         size_hint_y: None
         height: self.minimum_height
-        elevation: 12
-        md_bg_color: 0, 0, 0, 0
+        elevation: 24
         padding: "24dp", "24dp", "8dp", "8dp"
-
-        canvas:
-            Color:
-                rgba: root.theme_cls.bg_dark
-            RoundedRectangle:
-                pos: self.pos
-                size: self.size
-                radius: root.radius
+        radius: root.radius
+        md_bg_color:
+            root.theme_cls.bg_dark \
+            if not root.md_bg_color else root.md_bg_color
 
         MDLabel:
             id: title
@@ -166,7 +175,28 @@ Builder.load_string(
 
 
 class BaseDialog(ThemableBehavior, ModalView):
-    pass
+    radius = ListProperty([7, 7, 7, 7])
+    """
+    Dialog corners rounding value.
+
+    .. code-block:: python
+
+        [...]
+            self.dialog = MDDialog(
+                text="Oops! Something seems to have gone wrong!",
+                radius=[20, 7, 20, 7],
+            )
+            [...]
+
+    .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/dialog-radius.png
+        :align: center
+
+    :attr:`radius` is an :class:`~kivy.properties.ListProperty`
+    and defaults to `[7, 7, 7, 7]`.
+    """
+
+    _scale_x = NumericProperty(1)
+    _scale_y = NumericProperty(1)
 
 
 class MDDialog(BaseDialog):
@@ -176,17 +206,19 @@ class MDDialog(BaseDialog):
 
     .. code-block:: python
 
-        self.dialog = MDDialog(
-            title="Reset settings?",
-            buttons=[
-                MDFlatButton(
-                    text="CANCEL", text_color=self.theme_cls.primary_color
-                ),
-                MDFlatButton(
-                    text="ACCEPT", text_color=self.theme_cls.primary_color
-                ),
-            ],
-        )
+        [...]
+            self.dialog = MDDialog(
+                title="Reset settings?",
+                buttons=[
+                    MDFlatButton(
+                        text="CANCEL", text_color=self.theme_cls.primary_color
+                    ),
+                    MDFlatButton(
+                        text="ACCEPT", text_color=self.theme_cls.primary_color
+                    ),
+                ],
+            )
+            [...]
 
     .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/dialog-title.png
         :align: center
@@ -201,42 +233,26 @@ class MDDialog(BaseDialog):
 
     .. code-block:: python
 
-        self.dialog = MDDialog(
-            title="Reset settings?",
-            text="This will reset your device to its default factory settings.",
-            buttons=[
-                MDFlatButton(
-                    text="CANCEL", text_color=self.theme_cls.primary_color
-                ),
-                MDFlatButton(
-                    text="ACCEPT", text_color=self.theme_cls.primary_color
-                ),
-            ],
-        )
+        [...]
+            self.dialog = MDDialog(
+                title="Reset settings?",
+                text="This will reset your device to its default factory settings.",
+                buttons=[
+                    MDFlatButton(
+                        text="CANCEL", text_color=self.theme_cls.primary_color
+                    ),
+                    MDFlatButton(
+                        text="ACCEPT", text_color=self.theme_cls.primary_color
+                    ),
+                ],
+            )
+            [...]
 
     .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/dialog-text.png
         :align: center
 
     :attr:`text` is an :class:`~kivy.properties.StringProperty`
     and defaults to `''`.
-    """
-
-    radius = ListProperty([7, 7, 7, 7])
-    """
-    Dialog corners rounding value.
-
-    .. code-block:: python
-
-        self.dialog = MDDialog(
-            text="Oops! Something seems to have gone wrong!",
-            radius=[20, 7, 20, 7],
-        )
-
-    .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/dialog-radius.png
-        :align: center
-
-    :attr:`radius` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[7, 7, 7, 7]`.
     """
 
     buttons = ListProperty()
@@ -246,12 +262,14 @@ class MDDialog(BaseDialog):
 
     .. code-block:: python
 
-        self.dialog = MDDialog(
-            text="Discard draft?",
-            buttons=[
-                MDFlatButton(text="CANCEL"), MDRaisedButton(text="DISCARD"),
-            ],
-        )
+        [...]
+            self.dialog = MDDialog(
+                text="Discard draft?",
+                buttons=[
+                    MDFlatButton(text="CANCEL"), MDRaisedButton(text="DISCARD"),
+                ],
+            )
+            [...]
 
     .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/dialog-buttons.png
         :align: center
@@ -266,7 +284,7 @@ class MDDialog(BaseDialog):
     Objects must be inherited from :class:`~kivymd.uix.list.BaseListItem` class.
 
     With type 'simple'
-    -----------------
+    ~~~~~~~~~~~~~~~~~~
 
     .. code-block:: python
 
@@ -284,7 +302,7 @@ class MDDialog(BaseDialog):
                 source: root.source
 
 
-        FloatLayout:
+        MDFloatLayout:
 
             MDFlatButton:
                 text: "ALERT DIALOG"
@@ -324,7 +342,7 @@ class MDDialog(BaseDialog):
         :align: center
 
     With type 'confirmation'
-    -----------------------
+    ~~~~~~~~~~~~~~~~~~~~~~~~
 
     .. code-block:: python
 
@@ -339,12 +357,12 @@ class MDDialog(BaseDialog):
         <ItemConfirm>
             on_release: root.set_icon(check)
 
-            CheckboxRightWidget:
+            CheckboxLeftWidget:
                 id: check
                 group: "check"
 
 
-        FloatLayout:
+        MDFloatLayout:
 
             MDFlatButton:
                 text: "ALERT DIALOG"
@@ -409,6 +427,14 @@ class MDDialog(BaseDialog):
     and defaults to `[]`.
     """
 
+    width_offset = NumericProperty(dp(48))
+    """
+    Dialog offset from device width.
+
+    :attr:`width_offset` is an :class:`~kivy.properties.NumericProperty`
+    and defaults to `dp(48)`.
+    """
+
     type = OptionProperty(
         "alert", options=["alert", "simple", "confirmation", "custom"]
     )
@@ -424,7 +450,7 @@ class MDDialog(BaseDialog):
     """
     Custom content class.
 
-    .. code-block::
+    .. code-block:: python
 
         from kivy.lang import Builder
         from kivy.uix.boxlayout import BoxLayout
@@ -447,7 +473,7 @@ class MDDialog(BaseDialog):
                 hint_text: "Street"
 
 
-        FloatLayout:
+        MDFloatLayout:
 
             MDFlatButton:
                 text: "ALERT DIALOG"
@@ -493,18 +519,29 @@ class MDDialog(BaseDialog):
     and defaults to `'None'`.
     """
 
+    md_bg_color = ColorProperty(None)
+    """
+    Background color in the format (r, g, b, a).
+
+    :attr:`md_bg_color` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
+    """
+
     _scroll_height = NumericProperty("28dp")
     _spacer_top = NumericProperty("24dp")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        Window.bind(on_resize=self.update_width)
 
-        if self.size_hint == [1, 1] and DEVICE_TYPE == "mobile":
+        if self.size_hint == [1, 1] and (
+            DEVICE_TYPE == "desktop" or DEVICE_TYPE == "tablet"
+        ):
             self.size_hint = (None, None)
-            self.width = dp(280)
-        elif self.size_hint == [1, 1] and DEVICE_TYPE == "desktop":
+            self.width = min(dp(560), Window.width - self.width_offset)
+        elif self.size_hint == [1, 1] and DEVICE_TYPE == "mobile":
             self.size_hint = (None, None)
-            self.width = dp(560)
+            self.width = min(dp(280), Window.width - self.width_offset)
 
         if not self.title:
             self._spacer_top = 0
@@ -514,6 +551,7 @@ class MDDialog(BaseDialog):
         else:
             self.create_buttons()
 
+        update_height = False
         if self.type in ("simple", "confirmation"):
             if self.type == "confirmation":
                 self.ids.spacer_top_box.add_widget(MDSeparator())
@@ -524,17 +562,29 @@ class MDDialog(BaseDialog):
                 self.ids.container.remove_widget(self.ids.scroll)
                 self.ids.container.remove_widget(self.ids.text)
                 self.ids.spacer_top_box.add_widget(self.content_cls)
-                self._spacer_top = self.content_cls.height + dp(24)
                 self.ids.spacer_top_box.padding = (0, "24dp", "16dp", 0)
+                update_height = True
         if self.type == "alert":
             self.ids.scroll.bar_width = 0
 
+        if update_height:
+            Clock.schedule_once(self.update_height)
+
+    def update_width(self, *args):
+        self.width = max(
+            self.height + self.width_offset,
+            min(
+                dp(560) if DEVICE_TYPE != "mobile" else dp(280),
+                Window.width - self.width_offset,
+            ),
+        )
+
+    def update_height(self, *args):
+        self._spacer_top = self.content_cls.height + dp(24)
+
     def on_open(self):
         # TODO: Add scrolling text.
-        pass
-
-    def set_normal_height(self):
-        self.size_hint_y = 0.8
+        self.height = self.ids.container.height
 
     def get_normal_height(self):
         return (
@@ -551,8 +601,11 @@ class MDDialog(BaseDialog):
         instance_item._txt_left_pad = "56dp"
 
     def create_items(self):
-        self.ids.container.remove_widget(self.ids.text)
-        height = 0
+        if not self.text:
+            self.ids.container.remove_widget(self.ids.text)
+            height = 0
+        else:
+            height = self.ids.text.height
 
         for item in self.items:
             if issubclass(item.__class__, BaseListItem):
@@ -561,7 +614,6 @@ class MDDialog(BaseDialog):
                 self.ids.box_items.add_widget(item)
 
         if height > Window.height:
-            self.set_normal_height()
             self.ids.scroll.height = self.get_normal_height()
         else:
             self.ids.scroll.height = height

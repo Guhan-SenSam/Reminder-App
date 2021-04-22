@@ -17,17 +17,17 @@ Usage
 .. code-block:: kv
 
     MDChip:
-        label: 'Coffee'
+        text: 'Coffee'
         color: .4470588235118, .1960787254902, 0, 1
         icon: 'coffee'
-        callback: app.callback_for_menu_items
+        on_release: app.callback_for_menu_items(self)
 
 The user function takes two arguments - the object and the text of the chip:
 
 .. code-block:: python
 
-    def callback_for_menu_items(self, instance, value):
-        print(instance, value)
+    def callback_for_menu_items(self, instance):
+        print(instance)
 
 .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/ordinary-chip.png
     :align: center
@@ -38,7 +38,7 @@ Use custom icon
 .. code-block:: kv
 
     MDChip:
-        label: 'Kivy'
+        text: 'Kivy'
         icon: 'data/logo/kivy-icon-256.png'
 
 .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/chip-custom-icon.png
@@ -50,7 +50,7 @@ Use without icon
 .. code-block:: kv
 
     MDChip:
-        label: 'Without icon'
+        text: 'Without icon'
         icon: ''
 
 .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/chip-without-icon.png
@@ -62,7 +62,7 @@ Chips with check
 .. code-block:: kv
 
     MDChip:
-        label: 'Check with icon'
+        text: 'Check with icon'
         icon: 'city'
         check: True
 
@@ -77,40 +77,42 @@ Choose chip
     MDChooseChip:
 
         MDChip:
-            label: 'Earth'
+            text: 'Earth'
             icon: 'earth'
             selected_chip_color: .21176470535294, .098039627451, 1, 1
 
         MDChip:
-            label: 'Face'
+            text: 'Face'
             icon: 'face'
             selected_chip_color: .21176470535294, .098039627451, 1, 1
 
         MDChip:
-            label: 'Facebook'
+            text: 'Facebook'
             icon: 'facebook'
             selected_chip_color: .21176470535294, .098039627451, 1, 1
 
 .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/chip-shoose-icon.gif
     :align: center
 
-.. Note:: `See full example <https://github.com/HeaTTheatR/KivyMD/wiki/Components-Chip>`_
+.. Note:: `See full example <https://github.com/kivymd/KivyMD/wiki/Components-Chip>`_
 """
 
 from kivy.animation import Animation
-from kivy.metrics import dp
-from kivy.properties import (
-    StringProperty,
-    ListProperty,
-    ObjectProperty,
-    BooleanProperty,
-    NumericProperty,
-)
-from kivy.uix.boxlayout import BoxLayout
+from kivy.clock import Clock
 from kivy.lang import Builder
+from kivy.metrics import dp, sp
+from kivy.properties import (
+    BooleanProperty,
+    ColorProperty,
+    ListProperty,
+    StringProperty,
+    OptionProperty
+)
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.boxlayout import BoxLayout
 
-from kivymd.uix.button import MDIconButton
 from kivymd.theming import ThemableBehavior
+from kivymd.uix.label import MDIcon
 from kivymd.uix.stacklayout import MDStackLayout
 
 Builder.load_string(
@@ -126,65 +128,87 @@ Builder.load_string(
 <MDChip>
     size_hint: None,  None
     height: "26dp"
-    padding: 0, 0, 0, 0
+    padding: 0, 0, "8dp", 0
     width:
         self.minimum_width - dp(10)
 
     canvas:
         Color:
-            rgba: root.color
+            rgba: root.theme_cls.primary_color if not root.color else root.color
         RoundedRectangle:
             pos: self.pos
             size: self.size
-            radius: [root.radius]
+            radius: root.radius
 
     MDBoxLayout:
         id: box_check
         adaptive_size: True
         pos_hint: {'center_y': .5}
+        padding: "8dp", 0, 0, 0
 
     MDBoxLayout:
         adaptive_width: True
-        padding: dp(7)
+        padding: dp(10)
 
         Label:
             id: label
-            text: root.label
+            text: root.text
             size_hint_x: None
             width: self.texture_size[0]
+            color: root.text_color if root.text_color else (root.theme_cls.text_color)
+            markup: True
 
-    MDIconButton:
+    MDIcon:
         id: icon
         icon: root.icon
-        size_hint_y: None
-        height: "20dp"
-        pos_hint: {"center_y": .5}
-        user_font_size: "20dp"
-        disabled: True
+        size_hint: None, None
+        size: "26dp", "26dp"
+        font_size: "20sp"
+        theme_text_color: "Custom"
+        text_color: root.icon_color if root.icon_color else (root.theme_cls.text_color)
 """
 )
 
 
-class MDChip(BoxLayout, ThemableBehavior):
-    label = StringProperty()
-    """Chip text.
+class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
+    text = StringProperty()
+    """
+    Chip text.
 
-    :attr:`label` is an :class:`~kivy.properties.StringProperty`
+    :attr:`text` is an :class:`~kivy.properties.StringProperty`
     and defaults to `''`.
     """
 
     icon = StringProperty("checkbox-blank-circle")
-    """Chip icon.
+    """
+    Chip icon.
 
     :attr:`icon` is an :class:`~kivy.properties.StringProperty`
     and defaults to `'checkbox-blank-circle'`.
     """
 
-    color = ListProperty()
-    """Chip color in ``rgba`` format.
+    color = ColorProperty(None)
+    """
+    Chip color in ``rgba`` format.
 
-    :attr:`color` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`color` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
+    """
+
+    text_color = ColorProperty(None)
+    """
+    Chip's text color in ``rgba`` format.
+
+    :attr:`text_color` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
+    """
+
+    icon_color = ColorProperty(None)
+    """
+    Chip's icon color in ``rgba`` format.
+
+    :attr:`icon_color` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
     check = BooleanProperty(False)
@@ -195,71 +219,154 @@ class MDChip(BoxLayout, ThemableBehavior):
     and defaults to `False`.
     """
 
-    callback = ObjectProperty()
-    """Custom method.
+    radius = ListProperty(
+        [
+            dp(12),
+        ]
+    )
+    """
+    Corner radius values.
 
-    :attr:`callback` is an :class:`~kivy.properties.ObjectProperty`
+    :attr:`radius` is an :class:`~kivy.properties.ListProperty`
+    and defaults to `'[dp(12),]'`.
+    """
+
+    selected_chip_color = ColorProperty(None)
+    """
+    The color of the chip that is currently selected in ``rgba`` format.
+
+    :attr:`selected_chip_color` is an :class:`~kivy.properties.ColorProperty`
     and defaults to `None`.
     """
 
-    radius = NumericProperty("12dp")
-    """Corner radius values.
-
-    :attr:`radius` is an :class:`~kivy.properties.NumericProperty`
-    and defaults to `'12dp'`.
-    """
-
-    selected_chip_color = ListProperty()
-    """The color of the chip that is currently selected in ``rgba`` format.
-
-    :attr:`selected_chip_color` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
-    """
+    _color = ColorProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if not self.color:
-            self.color = self.theme_cls.bg_dark
+        Clock.schedule_once(self.set_color)
+
+    def set_color(self, interval):
+        md_choose_chip = self.parent
+        self._color = self. self.theme_cls.primary_color \
+                            if not self.color \
+                            else self.color
+        if md_choose_chip.selected:
+            if self.text in md_choose_chip.selected:
+                self.color = self.theme_cls.primary_dark \
+                             if not self.selected_chip_color \
+                             else self.selected_chip_color
+
+                if self.check:
+                    self.ids.box_check.add_widget(
+                        MDIcon(
+                            icon="check",
+                            size_hint=(None, None),
+                            size=("26dp", "26dp"),
+                            font_size=sp(20),
+                        ))
+            else:
+                self.color = self.theme_cls.primary_color \
+                             if not self.color \
+                             else self.color
+
 
     def on_icon(self, instance, value):
+        def remove_icon(interval):
+            self.remove_widget(self.ids.icon)
+
         if value == "":
             self.icon = "checkbox-blank-circle"
-            self.remove_widget(self.ids.icon)
+            Clock.schedule_once(remove_icon)
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             md_choose_chip = self.parent
-            if self.selected_chip_color:
-                Animation(
-                    color=self.theme_cls.primary_dark
-                    if not self.selected_chip_color
-                    else self.selected_chip_color,
-                    d=0.1,
-                ).start(self)
-            if issubclass(md_choose_chip.__class__, MDChooseChip):
-                for chip in md_choose_chip.children:
-                    if chip is not self:
-                        chip.color = self.theme_cls.bg_dark
-            if self.check:
+            if issubclass(md_choose_chip.__class__, MDChipContainer):
+                if md_choose_chip.type == 'choice':
+                    if md_choose_chip.multiple == True:
+                        if self.text in md_choose_chip.selected:
+                            Animation(
+                                color=self.theme_cls.primary_color
+                                if not self._color
+                                else self._color,
+                                d=0.3,
+                                ).start(self)
+                            md_choose_chip.selected.remove(self.text)
+                        else:
+                            Animation(
+                                color=self.theme_cls.primary_dark
+                                if not self.selected_chip_color
+                                else self.selected_chip_color,
+                                d=0.3,
+                                ).start(self)
+                            md_choose_chip.selected.append(self.text)
+
+                    else:
+                        for chip in md_choose_chip.children:
+                            if chip is not self:
+                                chip.color = (
+                                    self.theme_cls.primary_color
+                                    if not chip._color
+                                    else chip._color
+                                )
+                            else:
+                                Animation(
+                                    color=self.theme_cls.primary_dark
+                                    if not self.selected_chip_color
+                                    else self.selected_chip_color,
+                                    d=0.3,
+                                    ).start(chip)
+                                md_choose_chip.selected = [chip.text,]
+
+                elif md_choose_chip.type == 'action':
+                    pass
+
+                self.dispatch("on_press")
+                self.dispatch("on_release")
+
+
+            if self.check and md_choose_chip.multiple:
                 if not len(self.ids.box_check.children):
                     self.ids.box_check.add_widget(
-                        MDIconButton(
+                        MDIcon(
                             icon="check",
-                            size_hint_y=None,
-                            height=dp(20),
-                            disabled=True,
-                            user_font_size=dp(20),
-                            pos_hint={"center_y": 0.5},
+                            size_hint=(None, None),
+                            size=("26dp", "26dp"),
+                            font_size=sp(20),
                         )
                     )
                 else:
                     check = self.ids.box_check.children[0]
                     self.ids.box_check.remove_widget(check)
-            if self.callback:
-                self.callback(self, self.label)
 
 
-class MDChooseChip(MDStackLayout):
+
+class MDChipContainer(BoxLayout):
+
+    type = OptionProperty("choice", options = ["choice", "action"])
+    """
+    Chip type. Available options are: `'choice'`, `'action'`.
+
+    :attr:`type` is an :clas:`~kivy.properties.OptionProperty`
+    and defaults to `'choice'`.
+    """
+
+    multiple = BooleanProperty(False)
+    """
+    Muliple chip selection. If True then multiplre chips can be selected
+
+    attr:`required` is an :class:`~kivy.properties.BooleanProperty`
+    and defaults to `False`.
+    """
+
+    selected = ListProperty([])
+    """
+    The list of all selected chips.
+
+    :attr:`radius` is a :class:`~kivy.properties.ListProperty` and
+    defaults to `[]`.
+    """
+
     def add_widget(self, widget, index=0, canvas=None):
         if isinstance(widget, MDChip):
             return super().add_widget(widget)

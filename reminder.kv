@@ -1,5 +1,6 @@
 #:import wd kivy.core.window.Window
 #:import CardTransition kivy.uix.screenmanager.CardTransition
+
 <ScreenManagerMain>:
     transiton:CardTransition()
 
@@ -11,7 +12,7 @@
             size:self.size
             pos:self.pos
 
-    FloatLayout:
+    RelativeLayout:
         size:self.size
         pos:self.pos
         id:ele3
@@ -64,6 +65,14 @@
             size_hint:.85,.70
             pos_hint:{'center_x':.5, "center_y":.5}
 
+    MDFloatingActionButtonSpeedDial:
+        id:action_button
+        data:app.data
+        icon: "plus"
+        callback: app.plus_button_callback
+        root_button_anim: True
+
+
 <ReminderScreen>:
     canvas:
         Color:
@@ -98,49 +107,46 @@
     elevation:10
     size_hint:1, None
     orientation:'vertical'
+    padding:50,0,50,0
 
     MDTextField:
         id:heading
         text:
         pos_hint:{'center_x':.5, "center_y":.5}
-        size_hint:None,None
-        width:self.parent.width - dp(50)
+        size_hint:1,None
         on_size:root.height = self.height
         font_name:'Roboto-Black.ttf'
-        font_size:'25sp'
+        font_size:'30sp'
         multiline:True
         color_mode: 'custom'
         line_color_focus: 1,1,1,1
+        current_hint_text_color:1,1,1,1
 
 <ReminderDescriptionBlueprint>:
     radius:40,40,40,40
-    md_bg_color: 44/250,62/250,80/250, 1
+    md_bg_color:70/255,69/255,81/255,1
     elevation:10
     size_hint:1, None
     orientation:'vertical'
-
+    padding:50,0,50,0
     Label:
         id:label
         text:'Description:'
         size: self.texture_size
         size_hint:None,None
-        pos_hint:{'center_x':.25, "center_y":.5}
         font_name:'Roboto-Black.ttf'
-        font_size:'20sp'
-
-
+        font_size:'25sp'
     MDTextField:
         id:description
         text:
-        pos_hint:{'center_x':.5, "center_y":.5}
-        size_hint:None,None
-        width:self.parent.width - dp(50)
-        on_size:root.height = self.height + self.parent.ids.label.height*2
+        size_hint:1,None
         font_name:'Roboto-Medium.ttf'
-        font_size:'18sp'
+        font_size:'23sp'
         multiline:True
         color_mode: 'custom'
         line_color_focus: 1,1,1,1
+        current_hint_text_color:1,1,1,1
+        on_size:root.height = self.height + root.ids.label.height +dp(20)
 
 <ReminderTimingBlueprint>:
     radius:40,40,40,40
@@ -148,15 +154,111 @@
     elevation:10
     size_hint:1, None
     orientation:'vertical'
+    padding:50,50,50,50
 
-    BoxLayout:
-        orientation:'vertical'
+    GridLayout:
+        id:holder
+        on_size:root.height = self.minimum_height+100
+        cols:1
         height:self.minimum_height
-        on_size:root.height = self.minimum_height
-        size_hint:0.5,None
+        spacing:dp(20)
 
-    Button:
-    Button:
+        Label:
+            id:label1
+            text:'Reminding You At:'
+            size: self.texture_size
+            size_hint:None,None
+            font_name:'Roboto-Black.ttf'
+            font_size:'25sp'
+
+        MDTextFieldRound:
+            id:time_displayer
+            hint_text: 'Time'
+            icon_left:'clock'
+            size_hint:None,None
+            width:root.width/1.5
+            pos_hint:{'center_x':.5, 'center_y':.5}
+            normal_color:50/255,49/255,61/255,1
+            line_color:1,1,1,1
+            hint_text_color:1,1,1,1
+
+        GridLayout:
+            height:self.minimum_height
+            cols:3
+            spacing:'30dp'
+            size_hint_y:None
+
+            Label:
+                id:label2
+                text:'On These:'
+                size: self.texture_size
+                size_hint:None,None
+                font_name:'Roboto-Black.ttf'
+                font_size:'25sp'
+                valign:'top'
+            MDChipContainer:
+                type:'choice'
+                id:type
+                MDChip:
+                    id:days
+                    text: 'Days'
+                    icon: 'calendar'
+                    selected_chip_color:218/255,68/255,83/255,1
+                    color:50/255,49/255,61/255,1
+                MDChip:
+                    id:dates
+                    text: 'Dates'
+                    icon: 'face'
+                    selected_chip_color:218/255,68/255,83/255,1
+                    color:50/255,49/255,61/255,1
+
+
+
+<ReminderDaySelector>:
+    id:days_container
+    type:'choice'
+    multiple:True
+    size_hint_y:None
+    height:self.minimum_height
+    spacing:dp(10)
+    MDChip:
+        text:'Mon'
+        selected_chip_color:218/255,68/255,83/255,1
+        color:50/255,49/255,61/255,1
+        icon:''
+    MDChip:
+        text:'Tue'
+        selected_chip_color:218/255,68/255,83/255,1
+        color:50/255,49/255,61/255,1
+        icon:''
+    MDChip:
+        text:'Wed'
+        selected_chip_color:218/255,68/255,83/255,1
+        color:50/255,49/255,61/255,1
+        icon:''
+    MDChip:
+        text:'Thu'
+        selected_chip_color:218/255,68/255,83/255,1
+        color:50/255,49/255,61/255,1
+        icon:''
+    MDChip:
+        text:'Fri'
+        selected_chip_color:218/255,68/255,83/255,1
+        color:50/255,49/255,61/255,1
+        icon:''
+    MDChip:
+        text:'Sat'
+        selected_chip_color:218/255,68/255,83/255,1
+        color:50/255,49/255,61/255,1
+        icon:''
+    MDChip:
+        text:'Sun'
+        selected_chip_color:218/255,68/255,83/255,1
+        color:50/255,49/255,61/255,1
+        icon:''
+
+
+
 
 
 
@@ -212,36 +314,17 @@
         pos_hint:{'top':1}
         active:root.completed
 
-    BoxLayout:
-        orientation:"vertical"
-        size_hint:None, None
-        height:self.minimum_height
-        separation:'30dp'
-
-
-        Label:
-            id:title
-            text:
-            size_hint:None,None
-            size:self.texture_size
-            text_size:self.parent.parent.width, dp(20)
-            padding:("10dp", "0dp")
-            font_name:"Roboto-Medium.ttf"
-            font_size:"18sp"
-            shorten:True
-            shorten_from:"right"
-        Label:
-            id:desc
-            text:
-            size_hint:None,None
-            padding:("10dp", "0dp")
-            size:self.texture_size
-            text_size:self.parent.parent.width, dp(40)
-            font_name:"Roboto-Regular.ttf"
-            color:1,1,1,0.5
-            font_size:"14sp"
-            split_str:' '
-
+    Label:
+        id:text
+        text:
+        size_hint:None,None
+        size:self.texture_size
+        padding:("10dp", "0dp")
+        markup:True
+        max_lines:4
+        split_str:' '
+        text_size: self.parent.width, None
+        font_size:'20sp'
 
 <ListBlueprint>:
     orientation:'vertical'
@@ -375,6 +458,8 @@
         color_mode: 'custom'
         line_color_focus:218/255,68/255,83/255, 1
         current_hint_text_color:1,1,1,1
+        font_name:'Roboto-Black.ttf'
+        font_size:'25sp'
 
     MDRaisedButton:
         id:confirm_button
@@ -392,18 +477,3 @@
         text:"Cancel"
         elevation:9
         font:"Roboto-Regular.ttf"
-
-
-
-
-
-<DoActionButton>:
-    data:app.data
-    icon: "plus"
-    callback: app.plus_button_callback
-    root_button_anim: True
-    bg_color_root_button:218/255,68/255,83/255, 1
-    color_icon_root_button:50/255,49/255,61/255,1
-    bg_color_stack_button:218/255,68/255,83/255, 1
-    color_icon_stack_button:50/255,49/255,61/255,1
-    label_text_color:218/255,68/255,83/255, 1

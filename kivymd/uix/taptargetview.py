@@ -228,19 +228,20 @@ Events control
 """
 
 from kivy.animation import Animation
-from kivy.metrics import dp
-from kivy.graphics import Color, Ellipse, Rectangle
 from kivy.event import EventDispatcher
+from kivy.graphics import Color, Ellipse, Rectangle
 from kivy.logger import Logger
+from kivy.metrics import dp
 from kivy.properties import (
-    ObjectProperty,
-    NumericProperty,
-    ListProperty,
-    StringProperty,
     BooleanProperty,
+    ListProperty,
+    NumericProperty,
+    ObjectProperty,
     OptionProperty,
+    StringProperty,
 )
 from kivy.uix.label import Label
+
 from kivymd.theming import ThemableBehavior
 
 
@@ -490,6 +491,7 @@ class MDTapTargetView(ThemableBehavior, EventDispatcher):
         self.ripple_max_dist = dp(90)
         self.on_outer_radius(self, self.outer_radius)
         self.on_target_radius(self, self.target_radius)
+        self.anim_ripple = None
 
         self.core_title_text = Label(
             markup=True, size_hint=(None, None), bold=self.title_text_bold
@@ -590,7 +592,8 @@ class MDTapTargetView(ThemableBehavior, EventDispatcher):
         """Starts widget close animation."""
 
         # It needs a better implementation.
-        self.anim_ripple.unbind(on_complete=self._repeat_ripple)
+        if self.anim_ripple is not None:
+            self.anim_ripple.unbind(on_complete=self._repeat_ripple)
         self.core_title_text.opacity = 0
         self.core_description_text.opacity = 0
         anim = Animation(

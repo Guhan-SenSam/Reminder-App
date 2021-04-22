@@ -138,6 +138,7 @@ which will be used as an icon to the left of the item:
 .. code-block:: python
 
     from kivy.lang import Builder
+    from kivy.factory import Factory
 
     from kivymd.uix.bottomsheet import MDCustomBottomSheet
     from kivymd.app import MDApp
@@ -233,12 +234,12 @@ from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import (
-    ObjectProperty,
-    StringProperty,
-    NumericProperty,
-    ListProperty,
     BooleanProperty,
+    ColorProperty,
+    NumericProperty,
+    ObjectProperty,
     OptionProperty,
+    StringProperty,
 )
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
@@ -247,11 +248,11 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.modalview import ModalView
 from kivy.uix.scrollview import ScrollView
 
+from kivymd import images_path
+from kivymd.theming import ThemableBehavior
 from kivymd.uix.behaviors import BackgroundColorBehavior
 from kivymd.uix.label import MDIcon
-from kivymd.uix.list import OneLineListItem, ILeftBody, OneLineIconListItem
-from kivymd.theming import ThemableBehavior
-from kivymd import images_path
+from kivymd.uix.list import ILeftBody, OneLineIconListItem, OneLineListItem
 
 Builder.load_string(
     """
@@ -291,7 +292,7 @@ Builder.load_string(
 
             canvas:
                 Color:
-                    rgba: (0,0,0,0)
+                    rgba: root.theme_cls.bg_normal if not root.bg_color else root.bg_color
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
@@ -323,14 +324,24 @@ class MDBottomSheet(ThemableBehavior, ModalView):
     """Private attribute."""
 
     duration_opening = NumericProperty(0.15)
-    """The duration of the bottom sheet dialog opening animation.
+    """
+    The duration of the bottom sheet dialog opening animation.
 
     :attr:`duration_opening` is an :class:`~kivy.properties.NumericProperty`
     and defaults to `0.15`.
     """
 
+    duration_closing = NumericProperty(0.15)
+    """
+    The duration of the bottom sheet dialog closing animation.
+
+    :attr:`duration_closing` is an :class:`~kivy.properties.NumericProperty`
+    and defaults to `0.15`.
+    """
+
     radius = NumericProperty(25)
-    """The value of the rounding of the corners of the dialog.
+    """
+    The value of the rounding of the corners of the dialog.
 
     :attr:`radius` is an :class:`~kivy.properties.NumericProperty`
     and defaults to `25`.
@@ -348,7 +359,8 @@ class MDBottomSheet(ThemableBehavior, ModalView):
         ],
         allownone=True,
     )
-    """Sets which corners to cut from the dialog. Available options are:
+    """
+    Sets which corners to cut from the dialog. Available options are:
     (`"top_left"`, `"top_right"`, `"top"`, `"bottom_right"`, `"bottom_left"`, `"bottom"`).
 
     .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/bottomsheet-radius-from.png
@@ -359,23 +371,26 @@ class MDBottomSheet(ThemableBehavior, ModalView):
     """
 
     animation = BooleanProperty(False)
-    """To use animation of opening of dialogue of the bottom sheet or not.
+    """
+    Whether to use animation for opening and closing of the bottomsheet or not.
 
     :attr:`animation` is an :class:`~kivy.properties.BooleanProperty`
     and defaults to `False`.
     """
 
-    bg_color = ListProperty()
-    """Dialog background color in ``rgba`` format.
+    bg_color = ColorProperty(None)
+    """
+    Dialog background color in ``rgba`` format.
 
-    :attr:`bg_color` is an :class:`~kivy.properties.ListProperty`
+    :attr:`bg_color` is an :class:`~kivy.properties.ColorProperty`
     and defaults to `[]`.
     """
 
-    value_transparent = ListProperty([0, 0, 0, 0.8])
-    """Background transparency value when opening a dialog.
+    value_transparent = ColorProperty([0, 0, 0, 0.8])
+    """
+    Background transparency value when opening a dialog.
 
-    :attr:`value_transparent` is an :class:`~kivy.properties.ListProperty`
+    :attr:`value_transparent` is an :class:`~kivy.properties.ColorProperty`
     and defaults to `[0, 0, 0, 0.8]`.
     """
 
@@ -383,14 +398,25 @@ class MDBottomSheet(ThemableBehavior, ModalView):
     _gl_content = ObjectProperty()
     _position_content = NumericProperty()
 
-    def open(self, *largs):
-        super().open(*largs)
+    def open(self, *args):
+        super().open(*args)
 
     def add_widget(self, widget, index=0, canvas=None):
         super().add_widget(widget, index, canvas)
 
-    def on_dismiss(self):
-        self._gl_content.clear_widgets()
+    def dismiss(self, *args, **kwargs):
+        def dismiss(*args):
+            self.dispatch("on_pre_dismiss")
+            self._gl_content.clear_widgets()
+            self._real_remove_widget()
+            self.dispatch("on_dismiss")
+
+        if self.animation:
+            a = Animation(height=0, d=self.duration_closing)
+            a.bind(on_complete=dismiss)
+            a.start(self._gl_content)
+        else:
+            dismiss()
 
     def resize_content_layout(self, content, layout, interval=0):
         if not layout.ids.get("box_sheet_list"):
@@ -465,7 +491,7 @@ class MDListBottomSheet(MDBottomSheet):
         """
         :arg text: element text;
         :arg callback: function that will be called when clicking on an item;
-        :arg icon_src: which will be used as an icon to the left of the item;
+        :arg icon: which will be used as an icon to the left of the item;
         """
 
         if icon:
@@ -486,7 +512,7 @@ Builder.load_string(
     size: dp(64), dp(96)
 
     AnchorLayout:
-        anchoor_x: "center"
+        anchor_x: "center"
 
         MDIconButton:
             icon: root.source
@@ -520,12 +546,12 @@ class GridBottomSheetItem(ButtonBehavior, BoxLayout):
     and defaults to `''`.
     """
 
-    icon_size = StringProperty("32sp")
+    icon_size = NumericProperty("24sp")
     """
     Icon size.
 
     :attr:`caption` is an :class:`~kivy.properties.StringProperty`
-    and defaults to `'32sp'`.
+    and defaults to `'24sp'`.
     """
 
 

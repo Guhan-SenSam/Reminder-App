@@ -101,6 +101,41 @@ Usage
 .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/lists.gif
     :align: center
 
+Events of List
+--------------
+
+.. code-block:: python
+
+    from kivy.lang import Builder
+
+    from kivymd.app import MDApp
+
+    KV = '''
+    ScrollView:
+
+        MDList:
+
+            OneLineAvatarIconListItem:
+                on_release: print("Click!")
+
+                IconLeftWidget:
+                    icon: "github"
+
+            OneLineAvatarIconListItem:
+                on_release: print("Click 2!")
+
+                IconLeftWidget:
+                    icon: "gitlab"
+    '''
+
+
+    class MainApp(MDApp):
+        def build(self):
+            return Builder.load_string(KV)
+
+
+    MainApp().run()
+
 .. OneLineListItem:
 OneLineListItem
 ---------------
@@ -195,7 +230,7 @@ OneLineIconListItem
 
 .. code-block:: kv
 
-    OneLineAvatarListItem:
+    OneLineIconListItem:
         text: "Single-line item with avatar"
 
         IconLeftWidget:
@@ -369,7 +404,7 @@ Custom list item
             self.ids._right_container.x = container.width
 
         IconLeftWidget:
-            icon: "settings"
+            icon: "cog"
 
         Container:
             id: container
@@ -400,23 +435,23 @@ Custom list item
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import (
-    StringProperty,
-    NumericProperty,
-    ListProperty,
-    OptionProperty,
     BooleanProperty,
+    ColorProperty,
+    ListProperty,
+    NumericProperty,
+    OptionProperty,
+    StringProperty,
 )
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.image import Image
 
 import kivymd.material_resources as m_res
+from kivymd.theming import ThemableBehavior
 from kivymd.uix.behaviors import RectangularRippleBehavior
 from kivymd.uix.button import MDIconButton
-from kivymd.theming import ThemableBehavior
-from kivymd.font_definitions import theme_font_styles
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.selectioncontrol import MDCheckbox
+from kivymd.utils.fitimage import FitImage
 
 Builder.load_string(
     """
@@ -618,20 +653,20 @@ class BaseListItem(
     and defaults to `''`.
     """
 
-    text_color = ListProperty(None)
+    text_color = ColorProperty(None)
     """
     Text color in ``rgba`` format used if :attr:`~theme_text_color` is set
     to `'Custom'`.
-    
-    :attr:`text_color` is a :class:`~kivy.properties.ListProperty`
+
+    :attr:`text_color` is a :class:`~kivy.properties.ColorProperty`
     and defaults to `None`.
     """
 
-    font_style = OptionProperty("Subtitle1", options=theme_font_styles)
+    font_style = StringProperty("Subtitle1")
     """
     Text font style. See ``kivymd.font_definitions.py``.
 
-    :attr:`font_style` is a :class:`~kivy.properties.OptionProperty`
+    :attr:`font_style` is a :class:`~kivy.properties.StringProperty`
     and defaults to `'Subtitle1'`.
     """
 
@@ -659,21 +694,21 @@ class BaseListItem(
     and defaults to `''`.
     """
 
-    secondary_text_color = ListProperty(None)
+    secondary_text_color = ColorProperty(None)
     """
     Text color in ``rgba`` format used for secondary text
     if :attr:`~secondary_theme_text_color` is set to `'Custom'`.
 
-    :attr:`secondary_text_color` is a :class:`~kivy.properties.ListProperty`
+    :attr:`secondary_text_color` is a :class:`~kivy.properties.ColorProperty`
     and defaults to `None`.
     """
 
-    tertiary_text_color = ListProperty(None)
+    tertiary_text_color = ColorProperty(None)
     """
     Text color in ``rgba`` format used for tertiary text
-    if :attr:`~secondary_theme_text_color` is set to 'Custom'.
+    if :attr:`~tertiary_theme_text_color` is set to 'Custom'.
 
-    :attr:`tertiary_text_color` is a :class:`~kivy.properties.ListProperty`
+    :attr:`tertiary_text_color` is a :class:`~kivy.properties.ColorProperty`
     and defaults to `None`.
     """
 
@@ -693,19 +728,19 @@ class BaseListItem(
     and defaults to `'Secondary'`.
     """
 
-    secondary_font_style = OptionProperty("Body1", options=theme_font_styles)
+    secondary_font_style = StringProperty("Body1")
     """
     Font style for secondary line. See ``kivymd.font_definitions.py``.
 
-    :attr:`secondary_font_style` is a :class:`~kivy.properties.OptionProperty`
+    :attr:`secondary_font_style` is a :class:`~kivy.properties.StringProperty`
     and defaults to `'Body1'`.
     """
 
-    tertiary_font_style = OptionProperty("Body1", options=theme_font_styles)
+    tertiary_font_style = StringProperty("Body1")
     """
     Font style for tertiary line. See ``kivymd.font_definitions.py``.
 
-    :attr:`tertiary_font_style` is a :class:`~kivy.properties.OptionProperty`
+    :attr:`tertiary_font_style` is a :class:`~kivy.properties.StringProperty`
     and defaults to `'Body1'`.
     """
 
@@ -716,16 +751,16 @@ class BaseListItem(
     Divider mode. Available options are: `'Full'`, `'Inset'`
     and default to `'Full'`.
 
-    :attr:`tertiary_font_style` is a :class:`~kivy.properties.OptionProperty`
-    and defaults to `'Body1'`.
+    :attr:`divider` is a :class:`~kivy.properties.OptionProperty`
+    and defaults to `'Full'`.
     """
 
-    bg_color = ListProperty()
+    bg_color = ColorProperty(None)
     """
     Background color for menu item.
 
-    :attr:`bg_color` is a :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`bg_color` is a :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
     _txt_left_pad = NumericProperty("16dp")
@@ -972,11 +1007,11 @@ class ThreeLineAvatarIconListItem(ThreeLineAvatarListItem):
         self._txt_right_pad = dp(40) + m_res.HORIZ_MARGINS
 
 
-class ImageLeftWidget(ILeftBody, Image):
+class ImageLeftWidget(ILeftBody, FitImage):
     pass
 
 
-class ImageRightWidget(IRightBodyTouch, Image):
+class ImageRightWidget(IRightBodyTouch, FitImage):
     pass
 
 
@@ -988,5 +1023,5 @@ class IconLeftWidget(ILeftBodyTouch, MDIconButton):
     pass
 
 
-class CheckboxRightWidget(ILeftBodyTouch, MDCheckbox):
+class CheckboxLeftWidget(ILeftBodyTouch, MDCheckbox):
     pass

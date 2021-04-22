@@ -5,18 +5,22 @@ Behaviors
 Modules and classes implementing various behaviors for buttons etc.
 """
 
-from .ripplebehavior import CircularRippleBehavior, RectangularRippleBehavior
-from .hover_behavior import HoverBehavior
-from .focus_behavior import FocusBehavior
-from .elevation import (
-    CommonElevationBehavior,
-    RectangularElevationBehavior,
-    CircularElevationBehavior,
-    RectangularElevationBehavior,
-)
-from .backgroundcolorbehavior import (
+# flake8: NOQA
+from .hover_behavior import HoverBehavior  # isort:skip
+from .backgroundcolor_behavior import (
     BackgroundColorBehavior,
     SpecificBackgroundColorBehavior,
 )
+from .elevation import (
+    CircularElevationBehavior,
+    CommonElevationBehavior,
+    FakeCircularElevationBehavior,
+    FakeRectangularElevationBehavior,
+    ObservableShadow,
+    RectangularElevationBehavior,
+    RoundedRectangularElevationBehavior,
+)
+from .focus_behavior import FocusBehavior
 from .magic_behavior import MagicBehavior
+from .ripple_behavior import CircularRippleBehavior, RectangularRippleBehavior
 from .touch_behavior import TouchBehavior

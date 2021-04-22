@@ -96,7 +96,7 @@ Example
             for i in range(10):
                 self.root.ids.box.add_widget(
                     MDExpansionPanel(
-                        icon=f"{images_path}kivymd_logo.png",
+                        icon=f"{images_path}kivymd.png",
                         content=Content(),
                         panel_cls=MDExpansionPanelThreeLine(
                             text="Text",
@@ -113,7 +113,7 @@ Example
     :align: center
 
 Two events are available for :class:`~MDExpansionPanel`
-------------------------------------------------------
+-------------------------------------------------------
 
 - :attr:`~MDExpansionPanel.on_open`
 - :attr:`~MDExpansionPanel.on_close`
@@ -131,9 +131,9 @@ The user function takes one argument - the object of the panel:
     def on_panel_open(self, instance_panel):
         print(instance_panel)
 
-.. seealso:: `See Expansion panel example <https://github.com/HeaTTheatR/KivyMD/wiki/Components-Expansion-Panel>`_
+.. seealso:: `See Expansion panel example <https://github.com/kivymd/KivyMD/wiki/Components-Expansion-Panel>`_
 
-    `Expansion panel and MDCard <https://github.com/HeaTTheatR/KivyMD/wiki/Components-Expansion-Panel-and-MDCard>`_
+    `Expansion panel and MDCard <https://github.com/kivymd/KivyMD/wiki/Components-Expansion-Panel-and-MDCard>`_
 """
 
 __all__ = (
@@ -141,28 +141,36 @@ __all__ = (
     "MDExpansionPanelOneLine",
     "MDExpansionPanelTwoLine",
     "MDExpansionPanelThreeLine",
+    "MDExpansionPanelLabel",
 )
 
-from kivy.lang import Builder
 from kivy.animation import Animation
-from kivy.properties import ObjectProperty, NumericProperty, StringProperty
+from kivy.clock import Clock
+from kivy.lang import Builder
+from kivy.metrics import dp
+from kivy.properties import NumericProperty, ObjectProperty, StringProperty
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.widget import WidgetException
 
+import kivymd.material_resources as m_res
+from kivymd.icon_definitions import md_icons
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.list import (
+    IconLeftWidget,
+    ImageLeftWidget,
     IRightBodyTouch,
     OneLineAvatarIconListItem,
-    TwoLineAvatarIconListItem,
     ThreeLineAvatarIconListItem,
-    ImageLeftWidget,
+    TwoLineAvatarIconListItem,
+    TwoLineListItem,
 )
 
 Builder.load_string(
     """
 <MDExpansionChevronRight>:
-    icon: 'chevron-right'
+    icon: "chevron-right"
     disabled: True
+    md_bg_color_disabled: 0, 0, 0, 0
 
     canvas.before:
         PushMatrix
@@ -176,7 +184,7 @@ Builder.load_string(
 
 <MDExpansionPanel>
     size_hint_y: None
-    #height: dp(68)
+    # height: dp(68)
 """
 )
 
@@ -199,6 +207,25 @@ class MDExpansionPanelThreeLine(ThreeLineAvatarIconListItem):
     """Three-line panel."""
 
 
+class MDExpansionPanelLabel(TwoLineListItem):
+    """
+    Label panel.
+
+    ..warning:: This class is created for use in the
+        :class:`~kivymd.uix.stepper.MDStepperVertical` and
+        :class:`~kivymd.uix.stepper.MDStepper` classes, and has not
+        been tested for use outside of these classes.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_once(self.set_paddings)
+
+    def set_paddings(self, interval):
+        self._txt_bot_pad = dp(36)
+        self._txt_left_pad = dp(0)
+
+
 class MDExpansionPanel(RelativeLayout):
     """
     :Events:
@@ -209,14 +236,19 @@ class MDExpansionPanel(RelativeLayout):
     """
 
     content = ObjectProperty()
-    """Content of panel. Must be `Kivy` widget.
+    """
+    Content of panel. Must be `Kivy` widget.
 
     :attr:`content` is an :class:`~kivy.properties.ObjectProperty`
     and defaults to `None`.
     """
 
     icon = StringProperty()
-    """Icon of panel.
+    """
+    Icon of panel.
+
+    Icon Should be either be a path to an image or
+    a logo name in :class:`~kivymd.icon_definitions.md_icons`
 
     :attr:`icon` is an :class:`~kivy.properties.StringProperty`
     and defaults to `''`.
@@ -240,7 +272,8 @@ class MDExpansionPanel(RelativeLayout):
     """
 
     closing_transition = StringProperty("out_sine")
-    """The name of the animation transition type to use when animating to
+    """
+    The name of the animation transition type to use when animating to
     the :attr:`state` 'close'.
 
     :attr:`closing_transition` is a :class:`~kivy.properties.StringProperty`
@@ -265,6 +298,9 @@ class MDExpansionPanel(RelativeLayout):
     and defaults to `None`.
     """
 
+    _state = StringProperty("close")
+    _anim_playing = False
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.register_event_type("on_open")
@@ -276,6 +312,7 @@ class MDExpansionPanel(RelativeLayout):
                 MDExpansionPanelOneLine,
                 MDExpansionPanelTwoLine,
                 MDExpansionPanelThreeLine,
+                MDExpansionPanelLabel,
             ),
         ):
             self.panel_cls.pos_hint = {"top": 1}
@@ -283,9 +320,31 @@ class MDExpansionPanel(RelativeLayout):
             self.panel_cls.bind(
                 on_release=lambda x: self.check_open_panel(self.panel_cls)
             )
-            self.chevron = MDExpansionChevronRight()
-            self.panel_cls.add_widget(self.chevron)
-            self.panel_cls.add_widget(ImageLeftWidget(source=self.icon))
+            if not isinstance(self.panel_cls, MDExpansionPanelLabel):
+                self.chevron = MDExpansionChevronRight()
+                self.panel_cls.add_widget(self.chevron)
+                if self.icon:
+                    if self.icon in md_icons.keys():
+                        self.panel_cls.add_widget(
+                            IconLeftWidget(
+                                icon=self.icon,
+                                pos_hint={"center_y": 0.5},
+                            )
+                        )
+                    else:
+                        self.panel_cls.add_widget(
+                            ImageLeftWidget(
+                                source=self.icon, pos_hint={"center_y": 0.5}
+                            )
+                        )
+                else:
+                    self.panel_cls.remove_widget(
+                        self.panel_cls.ids._left_container
+                    )
+                    self.panel_cls._txt_left_pad = 0
+            else:
+                # if no icon
+                self.panel_cls._txt_left_pad = m_res.HORIZ_MARGINS
             self.add_widget(self.panel_cls)
         else:
             raise ValueError(
@@ -314,9 +373,10 @@ class MDExpansionPanel(RelativeLayout):
                     if instance is panel.children[1]:
                         press_current_panel = True
                     panel.remove_widget(panel.children[0])
-                    chevron = panel.children[0].children[0].children[0]
-                    self.set_chevron_up(chevron)
-                    self.close_panel(panel)
+                    if not isinstance(self.panel_cls, MDExpansionPanelLabel):
+                        chevron = panel.children[0].children[0].children[0]
+                        self.set_chevron_up(chevron)
+                    self.close_panel(panel, press_current_panel)
                     self.dispatch("on_close")
                     break
         if not press_current_panel:
@@ -325,26 +385,44 @@ class MDExpansionPanel(RelativeLayout):
     def set_chevron_down(self):
         """Sets the chevron down."""
 
-        Animation(_angle=-90, d=self.opening_time).start(self.chevron)
+        if not isinstance(self.panel_cls, MDExpansionPanelLabel):
+            Animation(_angle=-90, d=self.opening_time).start(self.chevron)
         self.open_panel()
         self.dispatch("on_open")
 
     def set_chevron_up(self, instance_chevron):
         """Sets the chevron up."""
 
-        Animation(_angle=0, d=self.closing_time).start(instance_chevron)
+        if not isinstance(self.panel_cls, MDExpansionPanelLabel):
+            Animation(_angle=0, d=self.closing_time).start(instance_chevron)
 
-    def close_panel(self, instance_panel):
+    def close_panel(self, instance_panel, press_current_panel):
         """Method closes the panel."""
 
-        Animation(
+        if self._anim_playing:
+            return
+
+        if press_current_panel:
+            self._anim_playing = True
+
+        self._state = "close"
+
+        anim = Animation(
             height=self.panel_cls.height,
             d=self.closing_time,
             t=self.closing_transition,
-        ).start(instance_panel)
+        )
+        anim.bind(on_complete=self._disable_anim)
+        anim.start(instance_panel)
 
     def open_panel(self, *args):
         """Method opens a panel."""
+
+        if self._anim_playing:
+            return
+
+        self._anim_playing = True
+        self._state = "open"
 
         anim = Animation(
             height=self.content.height + self.height,
@@ -352,7 +430,12 @@ class MDExpansionPanel(RelativeLayout):
             t=self.opening_transition,
         )
         anim.bind(on_complete=self._add_content)
+        anim.bind(on_complete=self._disable_anim)
         anim.start(self)
+
+    def get_state(self):
+        """Returns the state of panel. Can be `close` or `open` ."""
+        return self._state
 
     def add_widget(self, widget, index=0, canvas=None):
         if isinstance(
@@ -361,14 +444,20 @@ class MDExpansionPanel(RelativeLayout):
                 MDExpansionPanelOneLine,
                 MDExpansionPanelTwoLine,
                 MDExpansionPanelThreeLine,
+                MDExpansionPanelLabel,
             ),
         ):
             self.height = widget.height
         return super().add_widget(widget)
 
+    def _disable_anim(self, *args):
+        self._anim_playing = False
+
     def _add_content(self, *args):
         if self.content:
             try:
+                if isinstance(self.panel_cls, MDExpansionPanelLabel):
+                    self.content.y = dp(36)
                 self.add_widget(self.content)
             except WidgetException:
                 pass

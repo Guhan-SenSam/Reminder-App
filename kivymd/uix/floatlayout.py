@@ -1,6 +1,6 @@
 """
-Components/FloatLayout
-======================
+Components/Float Layout
+=======================
 
 :class:`~kivy.uix.floatlayout.FloatLayout` class equivalent. Simplifies working
 with some widget properties. For example:
@@ -27,6 +27,10 @@ MDFloatLayout
     MDFloatLayout:
         radius: [25, 0, 0, 0]
         md_bg_color: app.theme_cls.primary_color
+
+.. Warning:: For a :class:`~kivy.uix.floatlayout.FloatLayout`, the
+    ``minimum_size`` attributes are always 0, so you cannot use
+    ``adaptive_size`` and related options.
 """
 
 from kivy.uix.floatlayout import FloatLayout

@@ -67,7 +67,7 @@ Persistent helper text mode
     :align: center
 
 Helper text mode `'on_error'`
-----------------------------
+-----------------------------
 
 To display an error in a text field when using the
 ``helper_text_mode: "on_error"`` parameter, set the `"error"` text field
@@ -114,7 +114,7 @@ parameter to `True`:
     :align: center
 
 Helper text mode `'on_error'` (with required)
---------------------------------------------
+---------------------------------------------
 
 .. code-block:: kv
 
@@ -212,6 +212,39 @@ Fill mode
 .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/text-field-fill-mode.gif
     :align: center
 
+Maximum height
+--------------
+
+.. code-block:: python
+
+    from kivy.lang import Builder
+
+    from kivymd.app import MDApp
+
+    KV = '''
+    MDScreen
+
+        MDTextField:
+            size_hint_x: .5
+            hint_text: "multiline=True"
+            max_height: "200dp"
+            mode: "fill"
+            fill_color: 0, 0, 0, .4
+            multiline: True
+            pos_hint: {"center_x": .5, "center_y": .5}
+    '''
+
+
+    class Example(MDApp):
+        def build(self):
+            return Builder.load_string(KV)
+
+
+    Example().run()
+
+.. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/text-field-fill-mode-multiline-max-height.gif
+    :align: center
+
 .. MDTextFieldRect:
 MDTextFieldRect
 ---------------
@@ -297,6 +330,69 @@ Control background color
 .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/text-field-round-active-color.gif
     :align: center
 
+Clickable icon for MDTextFieldRound
+-----------------------------------
+
+.. code-block:: python
+
+    from kivy.lang import Builder
+    from kivy.properties import StringProperty
+
+    from kivymd.app import MDApp
+    from kivymd.uix.relativelayout import MDRelativeLayout
+
+    KV = '''
+    <ClickableTextFieldRound>:
+        size_hint_y: None
+        height: text_field.height
+
+        MDTextFieldRound:
+            id: text_field
+            hint_text: root.hint_text
+            text: root.text
+            password: True
+            color_active: app.theme_cls.primary_light
+            icon_left: "key-variant"
+            padding:
+                self._lbl_icon_left.texture_size[1] + dp(10) if self.icon_left else dp(15), \
+                (self.height / 2) - (self.line_height / 2), \
+                self._lbl_icon_right.texture_size[1] + dp(20), \
+                0
+
+        MDIconButton:
+            icon: "eye-off"
+            ripple_scale: .5
+            pos_hint: {"center_y": .5}
+            pos: text_field.width - self.width + dp(8), 0
+            on_release:
+                self.icon = "eye" if self.icon == "eye-off" else "eye-off"
+                text_field.password = False if text_field.password is True else True
+
+
+    MDScreen:
+
+        ClickableTextFieldRound:
+            size_hint_x: None
+            width: "300dp"
+            hint_text: "Password"
+            pos_hint: {"center_x": .5, "center_y": .5}
+    '''
+
+
+    class ClickableTextFieldRound(MDRelativeLayout):
+        text = StringProperty()
+        hint_text = StringProperty()
+        # Here specify the required parameters for MDTextFieldRound:
+        # [...]
+
+
+    class Test(MDApp):
+        def build(self):
+            return Builder.load_string(KV)
+
+
+    Test().run()
+
 With right icon
 ---------------
 
@@ -342,13 +438,17 @@ With right icon
 
 __all__ = ("MDTextField", "MDTextFieldRect", "MDTextFieldRound")
 
+import re
 import sys
 
 from kivy.animation import Animation
+from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.metrics import dp, sp
 from kivy.properties import (
+    AliasProperty,
     BooleanProperty,
+    ColorProperty,
     ListProperty,
     NumericProperty,
     ObjectProperty,
@@ -359,7 +459,6 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 
 from kivymd.font_definitions import theme_font_styles
-from kivymd.material_resources import DEVICE_TYPE
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.label import MDIcon
 
@@ -372,7 +471,19 @@ Builder.load_string(
 
     canvas.before:
         Clear
-        
+
+        # Disabled line.
+        Color:
+            rgba:
+                (self.line_color_normal \
+                if self.line_color_normal else self.theme_cls.divider_color) \
+                if root.mode == "line" else (0, 0, 0, 0)
+        Line:
+            points: self.x, self.y + dp(16), self.x + self.width, self.y + dp(16)
+            width: 1
+            dash_length: dp(3)
+            dash_offset: 2 if self.disabled else 0
+
         # Active line.
         Color:
             rgba: self._current_line_color if root.mode in ("line", "fill") and root.active_line else (0, 0, 0, 0)
@@ -392,7 +503,7 @@ Builder.load_string(
 
         # Texture of right Icon.
         Color:
-            rgba: self.icon_right_color
+            rgba: self.icon_right_color if self.focus else self._current_hint_text_color
         Rectangle:
             texture: self._lbl_icon_right.texture
             size: self._lbl_icon_right.texture_size if self.icon_right else (0, 0)
@@ -407,7 +518,7 @@ Builder.load_string(
         Rectangle:
             texture: self._right_msg_lbl.texture
             size: self._right_msg_lbl.texture_size
-            pos: self.width-self._right_msg_lbl.texture_size[0] + dp(45), self.y
+            pos: self.x + self.width - self._right_msg_lbl.texture_size[0] - dp(16), self.y
 
         Color:
             rgba:
@@ -433,7 +544,9 @@ Builder.load_string(
 
         # "rectangle" mode
         Color:
-            rgba: self._current_line_color
+            rgba:
+                (self._current_line_color if not self.text_color else self.text_color) \
+                if self.focus else self._current_hint_text_color
         Line:
             width: dp(1) if root.mode == "rectangle" else dp(0.00001)
             points:
@@ -449,15 +562,14 @@ Builder.load_string(
     # "fill" mode.
     canvas.after:
         Color:
-            rgba: root.fill_color if root.mode == "fill" else (0, 0, 0, 0)
+            rgba: root._fill_color if root.mode == "fill" else (0, 0, 0, 0)
         RoundedRectangle:
             pos: self.x, self.y
             size: self.width, self.height + dp(8)
-            radius: (10, 10, 0, 0, 0)
+            radius: root.radius
 
     font_name: "Roboto" if not root.font_name else root.font_name
-    foreground_color: app.theme_cls.text_color
-    font_size: "16sp"
+    foreground_color: self.theme_cls.text_color
     bold: False
     padding:
         0 if root.mode != "fill" else "8dp", \
@@ -488,8 +600,10 @@ Builder.load_string(
 
     canvas.after:
         Color:
+            group: "color"
             rgba: root._primary_color
         Line:
+            group: "rectangle"
             width: dp(1.5)
             points:
                 (
@@ -507,6 +621,7 @@ Builder.load_string(
     height: self.line_height + dp(10)
     background_active: f'{images_path}transparent.png'
     background_normal: f'{images_path}transparent.png'
+    hint_text_color: self.theme_cls.disabled_hint_text_color
     padding:
         self._lbl_icon_left.texture_size[1] + dp(10) if self.icon_left else dp(15), \
         (self.height / 2) - (self.line_height / 2), \
@@ -530,20 +645,11 @@ Builder.load_string(
             pos: self.pos
             size: self.size
 
-        Color:
-            rgba: self.line_color
-        Line:
-            points: self.pos[0] , self.pos[1], self.pos[0] + self.size[0], self.pos[1]
-        Line:
-            points: self.pos[0], self.pos[1] + self.size[1], self.pos[0] + self.size[0], self.pos[1] + self.size[1]
-        Line:
-            ellipse: self.pos[0] - self.size[1] / 2, self.pos[1], self.size[1], self.size[1], 180, 360
-        Line:
-            ellipse: self.size[0] + self.pos[0] - self.size[1] / 2.0, self.pos[1], self.size[1], self.size[1], 360, 540
-
         # Texture of left Icon.
         Color:
-            rgba: self.icon_left_color
+            rgba:
+                self.icon_left_color \
+                if self.focus else self.theme_cls.disabled_hint_text_color
         Rectangle:
             texture: self._lbl_icon_left.texture
             size:
@@ -555,7 +661,9 @@ Builder.load_string(
 
         # Texture of right Icon.
         Color:
-            rgba: self.icon_right_color
+            rgba:
+                self.icon_right_color \
+                if self.focus else self.theme_cls.disabled_hint_text_color
         Rectangle:
             texture: self._lbl_icon_right.texture
             size:
@@ -567,14 +675,57 @@ Builder.load_string(
 
         Color:
             rgba:
-                root.theme_cls.disabled_hint_text_color if not self.focus \
-                else root.foreground_color
+                self.hint_text_color if not self.text else root.foreground_color
+
+    canvas.after:
+        Color:
+            rgba: self.line_color if self.focus else self.theme_cls.disabled_hint_text_color
+        Line:
+            points: self.pos[0] , self.pos[1], self.pos[0] + self.size[0], self.pos[1]
+        Line:
+            points: self.pos[0], self.pos[1] + self.size[1], self.pos[0] + self.size[0], self.pos[1] + self.size[1]
+        Line:
+            ellipse: self.pos[0] - self.size[1] / 2, self.pos[1], self.size[1], self.size[1], 180, 360
+        Line:
+            ellipse: self.size[0] + self.pos[0] - self.size[1] / 2.0, self.pos[1], self.size[1], self.size[1], 360, 540
 """
 )
 
 
 class MDTextFieldRect(ThemableBehavior, TextInput):
-    _primary_color = ListProperty((0, 0, 0, 0))
+    line_anim = BooleanProperty(True)
+    """
+    If True, then text field shows animated line when on focus.
+
+    :attr:`line_anim` is an :class:`~kivy.properties.BooleanProperty`
+    and defaults to `True`.
+    """
+
+    def get_rect_instruction(self):
+        canvas_instructions = self.canvas.after.get_group("rectangle")
+        return canvas_instructions[0]
+
+    _rectangle = AliasProperty(get_rect_instruction, cache=True)
+    """
+    It is the :class:`~kivy.graphics.vertex_instructions.Line`
+    instruction reference of the field rectangle.
+
+    :attr:`_rectangle` is an :class:`~kivy.properties.AliasProperty`.
+    """
+
+    def get_color_instruction(self):
+        canvas_instructions = self.canvas.after.get_group("color")
+        return canvas_instructions[0]
+
+    _rectangle_color = AliasProperty(get_color_instruction, cache=True)
+    """
+    It is the :class:`~kivy.graphics.context_instructions.Color`
+    instruction reference of the field rectangle.
+
+    :attr:`_rectangle_color` is an :class:`~kivy.properties.AliasProperty`.
+    """
+
+    _primary_color = ColorProperty((0, 0, 0, 0))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -582,8 +733,6 @@ class MDTextFieldRect(ThemableBehavior, TextInput):
         self.theme_cls.bind(primary_color=self._update_primary_color)
 
     def anim_rect(self, points, alpha):
-        instance_line = self.canvas.children[-1].children[-1]
-        instance_color = self.canvas.children[-1].children[0]
         if alpha == 1:
             d_line = 0.3
             d_color = 0.4
@@ -591,8 +740,12 @@ class MDTextFieldRect(ThemableBehavior, TextInput):
             d_line = 0.05
             d_color = 0.05
 
-        Animation(points=points, d=d_line, t="out_cubic").start(instance_line)
-        Animation(a=alpha, d=d_color).start(instance_color)
+        Animation(
+            points=points, d=(d_line if self.line_anim else 0), t="out_cubic"
+        ).start(self._rectangle)
+        Animation(a=alpha, d=(d_color if self.line_anim else 0)).start(
+            self._rectangle_color
+        )
 
     def _update_primary_color(self, *args):
         self._primary_color = self.theme_cls.primary_color
@@ -664,36 +817,44 @@ class MDTextField(ThemableBehavior, TextInput):
     and defaults to `'line'`.
     """
 
-    line_color_normal = ListProperty()
+    line_color_normal = ColorProperty(None)
     """
     Line color normal in ``rgba`` format.
 
-    :attr:`line_color_normal` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`line_color_normal` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
-    line_color_focus = ListProperty()
+    line_color_focus = ColorProperty(None)
     """
     Line color focus in ``rgba`` format.
 
-    :attr:`line_color_focus` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`line_color_focus` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
-    error_color = ListProperty()
+    line_anim = BooleanProperty(True)
+    """
+    If True, then text field shows animated line when on focus.
+
+    :attr:`line_anim` is an :class:`~kivy.properties.BooleanProperty`
+    and defaults to `True`.
+    """
+
+    error_color = ColorProperty(None)
     """
     Error color in ``rgba`` format for ``required = True``.
 
-    :attr:`error_color` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`error_color` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
-    fill_color = ListProperty((0, 0, 0, 0))
+    fill_color = ColorProperty([0, 0, 0, 0])
     """
     The background color of the fill in rgba format when the ``mode`` parameter
     is "fill".
 
-    :attr:`fill_color` is an :class:`~kivy.properties.ListProperty`
+    :attr:`fill_color` is an :class:`~kivy.properties.ColorProperty`
     and defaults to `(0, 0, 0, 0)`.
     """
 
@@ -713,26 +874,86 @@ class MDTextField(ThemableBehavior, TextInput):
     and defaults to `False`.
     """
 
-    current_hint_text_color = ListProperty()
+    current_hint_text_color = ColorProperty(None)
     """
     ``hint_text`` text color.
 
-    :attr:`current_hint_text_color` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`current_hint_text_color` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
     icon_right = StringProperty()
-    """Right icon.
+    """
+    Right icon.
 
     :attr:`icon_right` is an :class:`~kivy.properties.StringProperty`
     and defaults to `''`.
     """
 
-    icon_right_color = ListProperty((0, 0, 0, 1))
-    """Color of right icon in ``rgba`` format.
+    icon_right_color = ColorProperty((0, 0, 0, 1))
+    """
+    Color of right icon in ``rgba`` format.
 
-    :attr:`icon_right_color` is an :class:`~kivy.properties.ListProperty`
+    :attr:`icon_right_color` is an :class:`~kivy.properties.ColorProperty`
     and defaults to `(0, 0, 0, 1)`.
+    """
+
+    text_color = ColorProperty(None)
+    """
+    Text color in ``rgba`` format.
+
+    :attr:`text_color` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
+    """
+
+    font_size = NumericProperty("16sp")
+    """
+    Font size of the text in pixels.
+
+    :attr:`font_size` is a :class:`~kivy.properties.NumericProperty` and
+    defaults to `'16sp'`.
+    """
+
+    # TODO: Add minimum allowed height. Otherwise, if the value is,
+    #  for example, 20, the text field will simply be lessened.
+    max_height = NumericProperty(0)
+    """
+    Maximum height of the text box when `multiline = True`.
+
+    :attr:`max_height` is a :class:`~kivy.properties.NumericProperty` and
+    defaults to `0`.
+    """
+
+    radius = ListProperty([10, 10, 0, 0])
+    """
+    The corner radius for a text field in `fill` mode.
+
+    :attr:`radius` is a :class:`~kivy.properties.ListProperty` and
+    defaults to `[10, 10, 0, 0]`.
+    """
+
+    font_name_helper_text = StringProperty("Roboto")
+    """
+    Font name for helper text.
+
+    :attr:`font_name_helper_text` is an :class:`~kivy.properties.StringProperty`
+    and defaults to `'Roboto'`.
+    """
+
+    font_name_hint_text = StringProperty("Roboto")
+    """
+    Font name for hint text.
+
+    :attr:`font_name_hint_text` is an :class:`~kivy.properties.StringProperty`
+    and defaults to `'Roboto'`.
+    """
+
+    font_name_max_length = StringProperty("Roboto")
+    """
+    Font name for max text length.
+
+    :attr:`font_name_max_length` is an :class:`~kivy.properties.StringProperty`
+    and defaults to `'Roboto'`.
     """
 
     _text_len_error = BooleanProperty(False)
@@ -741,11 +962,11 @@ class MDTextField(ThemableBehavior, TextInput):
     _line_blank_space_left_point = NumericProperty(0)
     _hint_y = NumericProperty("38dp")
     _line_width = NumericProperty(0)
-    _current_line_color = ListProperty((0, 0, 0, 0))
-    _current_error_color = ListProperty((0, 0, 0, 0))
-    _current_hint_text_color = ListProperty((0, 0, 0, 0))
-    _current_right_lbl_color = ListProperty((0, 0, 0, 0))
-
+    _current_line_color = ColorProperty((0, 0, 0, 0))
+    _current_error_color = ColorProperty((0, 0, 0, 0))
+    _current_hint_text_color = ColorProperty((0, 0, 0, 0))
+    _current_right_lbl_color = ColorProperty((0, 0, 0, 0))
+    _fill_color = ColorProperty((0, 0, 0, 0))
     _msg_lbl = None
     _right_msg_lbl = None
     _hint_lbl = None
@@ -759,15 +980,15 @@ class MDTextField(ThemableBehavior, TextInput):
         self.line_color_focus = self.theme_cls.primary_color
         self.error_color = self.theme_cls.error_color
         self._current_hint_text_color = self.theme_cls.disabled_hint_text_color
-        self._current_line_color = (self.theme_cls.primary_color)
+        self._current_line_color = self.theme_cls.primary_color
 
         self.bind(
             helper_text=self._set_msg,
-            hint_text=self._set_hint,
+            hint_text=self.on_hint_text,
             _hint_lbl_font_size=self._hint_lbl.setter("font_size"),
             helper_text_mode=self._set_message_mode,
             max_text_length=self._set_max_text_length,
-            text=self.on_text,
+            text=self.set_text,
         )
         self.theme_cls.bind(
             primary_color=self._update_primary_color,
@@ -775,6 +996,16 @@ class MDTextField(ThemableBehavior, TextInput):
             accent_color=self._update_accent_color,
         )
         self.has_had_text = False
+        self._better_texture_size = None
+        Clock.schedule_once(self.check_text)
+        Clock.schedule_once(self._set_fill_color)
+        self._set_msg(self, self.helper_text)
+
+    def check_text(self, interval):
+        self.set_text(self, self.text)
+
+    def _set_fill_color(self, interval):
+        self._fill_color = self.fill_color
 
     def set_objects_labels(self):
         """Creates labels objects for the parameters
@@ -787,6 +1018,7 @@ class MDTextField(ThemableBehavior, TextInput):
             valign="middle",
             text=self.helper_text,
             field=self,
+            font_name=self.font_name_helper_text,
         )
         # Label object for `max_text_length` parameter.
         self._right_msg_lbl = TextfieldLabel(
@@ -802,6 +1034,15 @@ class MDTextField(ThemableBehavior, TextInput):
         )
         # MDIcon object for the icon on the right.
         self._lbl_icon_right = MDIcon(theme_text_color="Custom")
+
+    def on_font_name_helper_text(self, instance, value):
+        self._msg_lbl.font_name = value
+
+    def on_font_name_hint_text(self, instance, value):
+        self._hint_lbl.font_name = value
+
+    def on_font_name_max_length(self, instance, value):
+        self._right_msg_lbl.font_name = value
 
     def on_icon_right(self, instance, value):
         self._lbl_icon_right.icon = value
@@ -829,28 +1070,34 @@ class MDTextField(ThemableBehavior, TextInput):
         self._set_text_len_error()
 
         if self.focus:
-            self._line_blank_space_right_point = (
-                self._get_line_blank_space_right_point()
-            )
-            _fill_color = self.fill_color
-            _fill_color[3] = self.fill_color[3] - 0.1
-            Animation(
-                _line_blank_space_right_point=self._line_blank_space_right_point,
-                _line_blank_space_left_point=self._hint_lbl.x - dp(5),
-                _current_hint_text_color=self.line_color_focus,
-                fill_color=_fill_color,
-                duration=0.2,
-                t="out_quad",
-            ).start(self)
+            if not self._get_has_error():
+
+                def on_progress(*args):
+                    self._line_blank_space_right_point = (
+                        self._hint_lbl.width + dp(5)
+                    )
+
+                animation = Animation(
+                    _line_blank_space_left_point=self._hint_lbl.x - dp(5),
+                    _current_hint_text_color=self.line_color_focus,
+                    _fill_color=self.fill_color[:-1]
+                    + [self.fill_color[-1] - 0.1],
+                    duration=0.2,
+                    t="out_quad",
+                )
+                animation.bind(on_progress=on_progress)
+                animation.start(self)
             self.has_had_text = True
             Animation.cancel_all(
                 self, "_line_width", "_hint_y", "_hint_lbl_font_size"
             )
             if not self.text:
                 self._anim_lbl_font_size(dp(14), sp(12))
-            Animation(_line_width=self.width, duration=0.2, t="out_quad").start(
-                self
-            )
+            Animation(
+                _line_width=self.width,
+                duration=(0.2 if self.line_anim else 0),
+                t="out_quad",
+            ).start(self)
             if self._get_has_error():
                 self._anim_current_error_color(self.error_color)
                 if self.helper_text_mode == "on_error" and (
@@ -867,19 +1114,19 @@ class MDTextField(ThemableBehavior, TextInput):
                     self._anim_current_error_color(disabled_hint_text_color)
             else:
                 self._anim_current_right_lbl_color(disabled_hint_text_color)
-                Animation(duration=0.2, color=self.line_color_focus).start(
-                    self._hint_lbl
-                )
+                Animation(
+                    duration=0.2, _current_hint_text_color=self.line_color_focus
+                ).start(self)
                 if self.helper_text_mode == "on_error":
                     self._anim_current_error_color((0, 0, 0, 0))
                 if self.helper_text_mode in ("persistent", "on_focus"):
                     self._anim_current_error_color(disabled_hint_text_color)
         else:
-            _fill_color = self.fill_color
-            _fill_color[3] = self.fill_color[3] + 0.1
-            Animation(fill_color=_fill_color, duration=0.2, t="out_quad").start(
-                self
-            )
+            Animation(
+                _fill_color=self.fill_color[:-1] + [self.fill_color[-1] + 0.1],
+                duration=0.2,
+                t="out_quad",
+            ).start(self)
             if not self.text:
                 self._anim_lbl_font_size(dp(38), sp(16))
                 Animation(
@@ -915,31 +1162,47 @@ class MDTextField(ThemableBehavior, TextInput):
                     self._anim_current_error_color(disabled_hint_text_color)
                 elif self.helper_text_mode == "on_focus":
                     self._anim_current_error_color((0, 0, 0, 0))
-                Animation(_line_width=0, duration=0.2, t="out_quad").start(self)
+                Animation(
+                    _line_width=0,
+                    duration=(0.2 if self.line_anim else 0),
+                    t="out_quad",
+                ).start(self)
 
-    def on_text(self, instance, text):
+    def on_disabled(self, *args):
+        if self.disabled:
+            self._update_colors(self.theme_cls.disabled_hint_text_color)
+        elif not self.disabled:
+            if self.color_mode == "primary":
+                self._update_primary_color()
+            elif self.color_mode == "accent":
+                self._update_accent_color()
+            elif self.color_mode == "custom":
+                self._update_colors(self.line_color_focus)
+
+    def set_text(self, instance, text):
+        self.text = re.sub("\n", " ", text) if not self.multiline else text
         if len(text) > 0:
             self.has_had_text = True
         if self.max_text_length is not None:
             self._right_msg_lbl.text = f"{len(text)}/{self.max_text_length}"
         self._set_text_len_error()
         if self.error or self._text_len_error:
-            if self.focus:
-                self._anim_current_line_color(self.error_color)
-                if self.helper_text_mode == "on_error" and (
-                    self.error or self._text_len_error
-                ):
-                    self._anim_current_error_color(self.error_color)
-                if self._text_len_error:
-                    self._anim_current_right_lbl_color(self.error_color)
+            self._anim_current_line_color(self.error_color)
+            if self.helper_text_mode == "on_error" and (
+                self.error or self._text_len_error
+            ):
+                self._anim_current_error_color(self.error_color)
+            if self._text_len_error:
+                self._anim_current_right_lbl_color(self.error_color)
         else:
-            if self.focus:
-                self._anim_current_right_lbl_color(
-                    self.theme_cls.disabled_hint_text_color
-                )
-                self._anim_current_line_color(self.line_color_focus)
-                if self.helper_text_mode == "on_error":
-                    self._anim_current_error_color((0, 0, 0, 0))
+            self._anim_current_right_lbl_color(
+                self.theme_cls.disabled_hint_text_color
+            )
+            self._anim_current_line_color(self.line_color_focus)
+            if self.helper_text_mode == "on_error":
+                self._anim_current_error_color((0, 0, 0, 0))
+            self.on_focus(self, self.focus)
+
         if len(self.text) != 0 and not self.focus:
             self._hint_y = dp(14)
             self._hint_lbl_font_size = sp(12)
@@ -963,11 +1226,23 @@ class MDTextField(ThemableBehavior, TextInput):
     def on__hint_text(self, instance, value):
         pass
 
+    def on_hint_text(self, instance, value):
+        self._hint_lbl.text = value
+        self._hint_lbl.font_size = sp(16)
+
+    def on_height(self, instance, value):
+        if value >= self.max_height and self.max_height:
+            self.height = self.max_height
+
     def _anim_get_has_error_color(self, color=None):
         # https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/_get_has_error.png
         if not color:
             line_color = self.line_color_focus
-            hint_text_color = self.theme_cls.disabled_hint_text_color
+            hint_text_color = (
+                self.theme_cls.disabled_hint_text_color
+                if not self.current_hint_text_color
+                else self.current_hint_text_color
+            )
             right_lbl_color = (0, 0, 0, 0)
         else:
             line_color = color
@@ -1050,15 +1325,6 @@ class MDTextField(ThemableBehavior, TextInput):
                 has_error = False
         return has_error
 
-    def _get_line_blank_space_right_point(self):
-        # https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/_line_blank_space_right_point.png
-        return (
-            self._hint_lbl.texture_size[0]
-            - self._hint_lbl.texture_size[0] / 100 * dp(18)
-            if DEVICE_TYPE == "desktop"
-            else dp(10)
-        )
-
     def _get_max_text_length(self):
         """Returns the maximum number of characters that can be entered in a
         text field."""
@@ -1076,9 +1342,6 @@ class MDTextField(ThemableBehavior, TextInput):
             self._text_len_error = True
         else:
             self._text_len_error = False
-
-    def _set_hint(self, instance, text):
-        self._hint_lbl.text = text
 
     def _set_msg(self, instance, text):
         self._msg_lbl.text = text
@@ -1101,61 +1364,72 @@ class MDTextField(ThemableBehavior, TextInput):
 
 class MDTextFieldRound(ThemableBehavior, TextInput):
     icon_left = StringProperty()
-    """Left icon.
+    """
+    Left icon.
 
     :attr:`icon_left` is an :class:`~kivy.properties.StringProperty`
     and defaults to `''`.
     """
 
-    icon_left_color = ListProperty((0, 0, 0, 1))
-    """Color of left icon in ``rgba`` format.
+    icon_left_color = ColorProperty((0, 0, 0, 1))
+    """
+    Color of left icon in ``rgba`` format.
 
-    :attr:`icon_left_color` is an :class:`~kivy.properties.ListProperty`
+    :attr:`icon_left_color` is an :class:`~kivy.properties.ColorProperty`
     and defaults to `(0, 0, 0, 1)`.
     """
 
     icon_right = StringProperty()
-    """Right icon.
+    """
+    Right icon.
 
     :attr:`icon_right` is an :class:`~kivy.properties.StringProperty`
     and defaults to `''`.
     """
 
-    icon_right_color = ListProperty((0, 0, 0, 1))
-    """Color of right icon.
+    icon_right_color = ColorProperty((0, 0, 0, 1))
+    """
+    Color of right icon.
 
-    :attr:`icon_right_color` is an :class:`~kivy.properties.ListProperty`
+    :attr:`icon_right_color` is an :class:`~kivy.properties.ColorProperty`
     and defaults to `(0, 0, 0, 1)`.
     """
 
-    line_color = ListProperty()
-    """Field line color.
+    line_color = ColorProperty(None)
+    """
+    Field line color.
 
-    :attr:`line_color` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`line_color` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
-    normal_color = ListProperty()
-    """Field color if `focus` is `False`.
+    normal_color = ColorProperty(None)
+    """
+    Field color if `focus` is `False`.
 
-    :attr:`normal_color` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`normal_color` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
-    color_active = ListProperty()
-    """Field color if `focus` is `True`.
+    color_active = ColorProperty(None)
+    """
+    Field color if `focus` is `True`.
 
-    :attr:`color_active` is an :class:`~kivy.properties.ListProperty`
-    and defaults to `[]`.
+    :attr:`color_active` is an :class:`~kivy.properties.ColorProperty`
+    and defaults to `None`.
     """
 
-    _color_active = ListProperty()
+    _color_active = ColorProperty(None)
+    _icon_left_color_copy = ColorProperty(None)
+    _icon_right_color_copy = ColorProperty(None)
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
         self._lbl_icon_left = MDIcon(theme_text_color="Custom")
         self._lbl_icon_right = MDIcon(theme_text_color="Custom")
+        super().__init__(**kwargs)
         self.cursor_color = self.theme_cls.primary_color
+        self.icon_left_color = self.theme_cls.text_color
+        self.icon_right_color = self.theme_cls.text_color
 
         if not self.normal_color:
             self.normal_color = self.theme_cls.primary_light
@@ -1169,20 +1443,36 @@ class MDTextFieldRound(ThemableBehavior, TextInput):
             self.icon_left_color = self.theme_cls.primary_color
             self.icon_right_color = self.theme_cls.primary_color
         else:
-            self.icon_left_color = self.theme_cls.text_color
-            self.icon_right_color = self.theme_cls.text_color
+            self.icon_left_color = (
+                self._icon_left_color_copy or self.theme_cls.text_color
+            )
+            self.icon_right_color = (
+                self._icon_right_color_copy or self.theme_cls.text_color
+            )
 
     def on_icon_left(self, instance, value):
         self._lbl_icon_left.icon = value
 
     def on_icon_left_color(self, instance, value):
         self._lbl_icon_left.text_color = value
+        if (
+            not self._icon_left_color_copy
+            and value != self.theme_cls.text_color
+            and value != self.theme_cls.primary_color
+        ):
+            self._icon_left_color_copy = value
 
     def on_icon_right(self, instance, value):
         self._lbl_icon_right.icon = value
 
     def on_icon_right_color(self, instance, value):
         self._lbl_icon_right.text_color = value
+        if (
+            not self._icon_right_color_copy
+            and value != self.theme_cls.text_color
+            and value != self.theme_cls.primary_color
+        ):
+            self._icon_right_color_copy = value
 
     def on_color_active(self, instance, value):
         if value != [0, 0, 0, 0.5]:
