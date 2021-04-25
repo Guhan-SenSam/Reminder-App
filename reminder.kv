@@ -156,12 +156,13 @@
     orientation:'vertical'
     padding:50,50,50,50
 
-    GridLayout:
+    BoxLayout:
         id:holder
         on_size:root.height = self.minimum_height+100
         cols:1
         height:self.minimum_height
         spacing:dp(20)
+        orientation:'vertical'
 
         Label:
             id:label1
@@ -171,16 +172,18 @@
             font_name:'Roboto-Black.ttf'
             font_size:'25sp'
 
-        MDTextFieldRound:
-            id:time_displayer
-            hint_text: 'Time'
-            icon_left:'clock'
+        MDFillRoundFlatIconButton:
+            id:time_picker
+            text: 'Time'
+            font_size:'22sp'
+            icon:'clock'
             size_hint:None,None
             width:root.width/1.5
             pos_hint:{'center_x':.5, 'center_y':.5}
-            normal_color:50/255,49/255,61/255,1
-            line_color:1,1,1,1
-            hint_text_color:1,1,1,1
+            icon_color:218/255,68/255,83/255,1
+            line_color:218/255,68/255,83/255,1
+            text_color:218/255,68/255,83/255,1
+            md_bg_color:50/255,49/255,61/255,1
 
         GridLayout:
             height:self.minimum_height
@@ -199,6 +202,7 @@
             MDChipContainer:
                 type:'choice'
                 id:type
+                spacing:dp(5)
                 MDChip:
                     id:days
                     text: 'Days'
@@ -212,53 +216,69 @@
                     selected_chip_color:218/255,68/255,83/255,1
                     color:50/255,49/255,61/255,1
 
+                MDChip:
+                    id:none
+                    text:'None'
+                    icon:'close'
+                    selected_chip_color:218/255,68/255,83/255,1
+                    color:50/255,49/255,61/255,1
+        MDChipContainer:
+            id:days_container
+            type:'choice'
+            multiple:True
+            size_hint:None,None
+            height:self.minimum_height
+            spacing:dp(5)
+            pos_hint:{'center_x':.2}
 
 
-<ReminderDaySelector>:
-    id:days_container
-    type:'choice'
-    multiple:True
-    size_hint_y:None
+<ReminderDatesBlueprint>:
     height:self.minimum_height
-    spacing:dp(10)
-    MDChip:
-        text:'Mon'
-        selected_chip_color:218/255,68/255,83/255,1
-        color:50/255,49/255,61/255,1
-        icon:''
-    MDChip:
-        text:'Tue'
-        selected_chip_color:218/255,68/255,83/255,1
-        color:50/255,49/255,61/255,1
-        icon:''
-    MDChip:
-        text:'Wed'
-        selected_chip_color:218/255,68/255,83/255,1
-        color:50/255,49/255,61/255,1
-        icon:''
-    MDChip:
-        text:'Thu'
-        selected_chip_color:218/255,68/255,83/255,1
-        color:50/255,49/255,61/255,1
-        icon:''
-    MDChip:
-        text:'Fri'
-        selected_chip_color:218/255,68/255,83/255,1
-        color:50/255,49/255,61/255,1
-        icon:''
-    MDChip:
-        text:'Sat'
-        selected_chip_color:218/255,68/255,83/255,1
-        color:50/255,49/255,61/255,1
-        icon:''
-    MDChip:
-        text:'Sun'
-        selected_chip_color:218/255,68/255,83/255,1
-        color:50/255,49/255,61/255,1
-        icon:''
+    size_hint_y:None
+    spacing:'40dp'
+    cols:2
+    MDFillRoundFlatIconButton:
+        id:date_picker
+        text: 'Date'
+        font_size:'22sp'
+        icon:'calendar'
+        icon_color:218/255,68/255,83/255,1
+        line_color:218/255,68/255,83/255,1
+        text_color:218/255,68/255,83/255,1
+        md_bg_color:50/255,49/255,61/255,1
+
+    MDIconButton:
+        icon:'minus'
+        md_bg_color:50/255,49/255,61/255,1
+        theme_text_color: "Custom"
+        text_color:218/255,68/255,83/255,1
 
 
+<ReminderSaveBlueprint>:
+    radius:40,40,40,40
+    md_bg_color:44/250,62/250,80/250, 1
+    elevation:10
+    size_hint:1, None
+    padding:50,0,50,0
+    orientation:'horizontal'
+    height:self.minimum_height + 100
+    spacing:dp(20)
 
+    MDFillRoundFlatButton:
+        id:cancel_button
+        text:'Cancel'
+        font_size:'22sp'
+        md_bg_color:50/255,49/255,61/255,1
+        text_color:218/255,68/255,83/255,1
+        pos_hint:{'center_y':.5}
+
+    MDFillRoundFlatButton:
+        id:save_button
+        text:'Save'
+        font_size:'22sp'
+        md_bg_color:218/255,68/255,83/255,1
+        text_color:50/255,49/255,61/255,1
+        pos_hint:{'center_y':.5}
 
 
 

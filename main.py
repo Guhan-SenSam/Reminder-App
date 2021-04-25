@@ -4,21 +4,20 @@ from kivymd.uix.card import MDCard
 from kivymd.uix.button import MDFloatingActionButtonSpeedDial
 from kivymd.toast import toast
 from kivymd.uix.button import MDIconButton
-from kivymd.uix.picker import MDTimePicker
-from kivymd.uix.chip import MDChipContainer
+from kivymd.uix.picker import MDTimePicker, MDDatePicker
+from kivymd.uix.chip import MDChipContainer, MDChip
 
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.utils import platform
 from kivy.uix.screenmanager import Screen, ScreenManager, CardTransition
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.animation import Animation
 from kivy.clock import Clock
-from kivy.uix.button import Button
 
 import gesture_box as gesture
 from functools import partial
@@ -28,9 +27,10 @@ import plyer
 import threading
 
 import time
+import datetime
 import re
 
-
+from kivmob import KivMob, TestIds
 
 connection = sqlite3.connect('reminder.db')
 
@@ -197,14 +197,12 @@ class MainViewHandler():
     def reminder_complete_handler(self, instance):
         if instance.parent.completed == False:
             instance.parent.completed = True
-            instance.parent.ids.title.strikethrough = True
-            instance.parent.ids.desc.strikethrough = True
+            instance.parent.ids.text.strikethrough = True
             mycursor.execute("UPDATE {} SET state = 1 WHERE creation_order = {}".format(all_lists[0], instance.parent.name))
             connection.commit()
         else:
             instance.parent.completed = False
-            instance.parent.ids.title.strikethrough = False
-            instance.parent.ids.desc.strikethrough = False
+            instance.parent.ids.text.strikethrough = False
             mycursor.execute("UPDATE {} SET state = 0 WHERE creation_order = {}".format(all_lists[0], instance.parent.name))
             connection.commit()
 
@@ -330,62 +328,175 @@ class OpenListView():
         MainViewHandler.load_next_list_title(self, 1)
 
 
-    def list_deleter(self, callr):
+    def list_deleter(self, caller):
         mycursor.execute("DROP TABLE {}".format(current_list))
         MainViewHandler.all_lists_loader(self, 1)
         OpenListView.back_op(self,None)
 
-
 class IndividualReminderView():
-    def screen_loader(self,reminder):
+    def screen_switcher(self,reminder):
         sm.current = 'ReminderScreen'
+        Clock.schedule_once(partial(IndividualReminderView.heading_loader, self, reminder),.45)
+
+    def heading_loader(self, reminder, instance):
         Remindervar = sm.get_screen('ReminderScreen')
-        Remindervar.ids.back_button.bind(on_press = partial(IndividualReminderView.back_op, self))
+        Remindervar.ids.back_button.bind(on_press= partial(IndividualReminderView.back_op, self))
         mycursor.execute("SELECT * FROM {} WHERE creation_order = {}".format(current_list, reminder))
-        reminder_data = mycursor.fetchone()
-        heading = ReminderTitleBlueprint()
-        description = ReminderDescriptionBlueprint()
-        timing = ReminderTimingBlueprint()
-        heading.opacity = 0
-        description.opacity = 0
-        timing.opacity = 1
-        heading.ids.heading.text = reminder_data[0]
-        if reminder_data[1]:
-            description.ids.description.text = reminder_data[1]
+        self.reminder_data = mycursor.fetchone()
+        self.heading = ReminderTitleBlueprint()
+        self.heading.opacity = 0
+        self.heading.ids.heading.text = self.reminder_data[0]
+        Remindervar.ids.container.add_widget(self.heading)
+        anim1 = Animation(opacity = 1, duration = .2)
+        anim1.start(heading)
+        Clock.schedule_once(partial(IndividualReminderView.description_loader, self, reminder),.2)
+
+    def description_loader(self, reminder, instance):
+        Remindervar = sm.get_screen('ReminderScreen')
+        self.description = ReminderDescriptionBlueprint()
+        self.description.opacity = 0
+        if self.reminder_data[1]:
+            self.description.ids.description.text = self.reminder_data[1]
         else:
             description.ids.description.text = ''
-        reminder_dates=eval(reminder_data[2])
-        if reminder_dates[0].isalpha():
-            #This means we have dates for the reminder to ring on
-            timing.ids.type.selected = ['Days']
-            day_selector = ReminderDaySelector()
-            timing.ids.holder.add_widget(day_selector)
-        else:
+        Remindervar.ids.container.add_widget(self.description)
+        anim2 = Animation(opacity = 1, duration = .25)
+        anim2.start(self.description)
+        Clock.schedule_once(partial(IndividualReminderView.timing_loader, self, reminder),.3)
+
+    def timing_loader(self, reminder, instance):
+        Remindervar = sm.get_screen('ReminderScreen')
+        Remindervar.ids.container.add_widget(self.timing)
+        self.reminder_dates=eval(self.reminder_data[2])
+        if not self.reminder_dates[0]:
+            #This means the reminder will not have any date to ring on
+            self.timing.ids.days.active = False
+            self.timing.ids.dates.active = False
+            self.timing.ids.none.active = True
+
+        elif self.reminder_dates[0].isalpha():
             #This means we have days for the reminder to ring on
-            timing.ids.type.selected = ['Dates']
+            self.timing.ids.days.active = True
+            self.timing.ids.dates.active = False
+            self.timing.ids.none.active = False
+            self.timing.ids.days_container.orientation = 'horizontal'
+            data = ['M','T','W','T','F','S','S']
+            self.create_day_event = Clock.schedule_once(partial(IndividualReminderView.day_adder,self,data), 0)
+            Clock.schedule_once(partial(IndividualReminderView.save_adder, self), .3)
+        else:
+            #This means we have dates for the reminder to ring on
+            self.timing.ids.dates.active = True
+            self.timing.ids.days.active = False
+            self.timing.ids.none.active = False
+            self.timing.ids.days_container.orientation = 'vertical'
+            data = list(self.reminder_dates)
+            plus_button = MDIconButton(icon = 'plus', md_bg_color = (218/255,68/255,83/255,1))
+            plus_button.bind(on_release = partial(IndividualReminderView.new_date_adder, self))
+            self.timing.ids.holder.add_widget(plus_button)
+            self.create_date_event = Clock.schedule_once(partial(IndividualReminderView.date_adder, self, data), 0)
+            Clock.schedule_once(partial(IndividualReminderView.save_adder, self), .3)
+
+    def save_adder(self,*args):
+        Remindervar = sm.get_screen('ReminderScreen')
+        saving = ReminderSaveBlueprint()
+        saving.ids.save_button.bind(on_release = partial(IndividualReminderView.save_reminder, self))
+        saving.ids.cancel_button.bind(on_release = partial(IndividualReminderView.back_op,self))
+        Remindervar.ids.container.add_widget(saving)
 
 
 
-        Remindervar.ids.container.add_widget(heading)
-        Remindervar.ids.container.add_widget(description)
-        Remindervar.ids.container.add_widget(timing)
-        anim1 = Animation(opacity = 1, duration = .5, t = 'in_out_circ')
-        anim1.start(heading)
-        anim2 = Animation(duration = .3)
-        anim2 += Animation(opacity = 1, duration = .3, t = 'in_out_circ')
-        anim2.start(description)
+    def day_adder(self, data, *args):
+        Remindervar = sm.get_screen('ReminderScreen')
+        if data:
+            ele = MDChip(text = data[0],
+                         selected_chip_color = (218/255,68/255,83/255,1),
+                         color = (50/255,49/255,61/255,1),
+                         icon = '',
+                         )
+            self.timing.ids.days_container.add_widget(ele)
+            del data[0]
+            self.create_day_event = Clock.schedule_once(partial(IndividualReminderView.day_adder, self, data), 0)
+        else:
+            self.create_day_event.cancel()
+            self.created = True
 
-    def touch_detect(self, time_picker, instance, touch):
-        if instance.collide_point(*touch.pos):
-            time_picker.open()
+    def date_adder(self, data, *args):
+        if data:
+            ele = ReminderDatesBlueprint()
+            ele.ids.date_picker.text = data[0]
+            ele.ids.date_picker.bind(on_release = partial(IndividualReminderView.current_open_definer, self))
+            self.timing.ids.days_container.add_widget(ele)
+            del data[0]
+            self.create_date_event()
+        else:
+            self.create_date_event.cancel()
+            self.created = True
 
+    def type_switcher(instance, value):
+        self = MDApp.get_running_app()
+        print(value)
+        if 'Dates' in value and self.created:
+            self.timing.ids.days_container.clear_widgets()
+            self.timing.ids.days_container.orientation = 'vertical'
+            plus_button = MDIconButton(icon = 'plus', md_bg_color = (218/255,68/255,83/255,1),)
+            plus_button.bind(on_release = partial(IndividualReminderView.new_date_adder, self))
+            self.timing.ids.holder.add_widget(plus_button)
 
+        elif 'Days' in value and self.created:
+            self.timing.ids.days_container.clear_widgets()
+            if len(self.timing.ids.holder.children) == 5:
+                self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
+            self.timing.ids.days_container.orientation = 'horizontal'
+            data = ['M','T','W','T','F','S','S']
+            self.create_day_event = Clock.schedule_once(partial(IndividualReminderView.day_adder,self,data), 0)
+
+        elif 'None' in value and self.created:
+            self.timing.ids.days_container.clear_widgets()
+            if len(self.timing.ids.holder.children) == 5:
+                self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
 
     def back_op(self, caller):
-        sm.current = 'MainScreen'
-        sm.transition.direction = 'right'
         Remindervar = sm.get_screen('ReminderScreen')
         Remindervar.ids.container.clear_widgets()
+        self.timing.ids.days_container.clear_widgets()
+        if len(self.timing.ids.holder.children) == 5:
+            self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
+        sm.current = 'MainScreen'
+        sm.transition.direction = 'right'
+
+    def current_open_definer(self, instance):
+        self.date_picker.open()
+        self.current_editing = instance
+
+    def time_setter(instance,time):
+        self = MDApp.get_running_app()
+        self.timing.ids.time_picker.text = time.strftime('%I:%M %p')
+
+    def date_setter(self,date,date_range):
+        self = MDApp.get_running_app()
+        new_date = date.strftime('%x')
+        for others in self.current_editing.parent.parent.children:
+            if others.ids.date_picker.text == new_date:
+                toast('This Reminder already rings on this date \n choose another date')
+                break
+        else:
+            self.current_editing.text = new_date
+
+    def new_date_adder(self, instance):
+        ele = ReminderDatesBlueprint()
+        ele.ids.date_picker.bind(on_release = partial(IndividualReminderView.current_open_definer, self))
+        ele.ids.date_picker.text = 'Choose a date'
+        self.timing.ids.days_container.add_widget(ele)
+
+    def save_reminder(self,caller):
+
+
+    def changes_checker():
+        self.new_timings =
+        if (self.reminder_data[0] == self.heading.text and
+            self.reminder_data[1] == self.description.text and
+            self.reminder_data[3] ==
+
 
 
 
@@ -448,8 +559,6 @@ class Creator():
         Mainscreenvar.ids.action_button.opacity = 1
         MainViewHandler.slider(self,0, None)
 
-
-
 class AndroidHandler():
 
     def back_operation_handler(self):
@@ -462,11 +571,6 @@ class AndroidHandler():
                 back_counter+=1
             else:
                 self.stop()
-
-
-
-
-
 
 class ListReminderElement(BoxLayout):
     pass
@@ -489,7 +593,7 @@ class IndivualReminderElementBlueprint(BoxLayout):
             if not self.ids.check_box.collide_point(*touch.pos):
                 app = MDApp.get_running_app()
                 sm.transition.direction = 'left'
-                IndividualReminderView.screen_loader(app,self.name)
+                IndividualReminderView.screen_switcher(app,self.name)
 
 
 
@@ -505,6 +609,7 @@ class SelectableRecycleBoxLayout(RecycleBoxLayout):
 class MainScreen(Screen):
     pass
 
+
 class ReminderScreen(Screen):
     pass
 
@@ -518,6 +623,12 @@ class ReminderTimingBlueprint(MDCard):
     pass
 
 class ReminderDaySelector(MDChipContainer):
+    pass
+
+class ReminderDatesBlueprint(GridLayout):
+    pass
+
+class ReminderSaveBlueprint(MDCard):
     pass
 
 class ScreenManagerMain(ScreenManager, gesture.GestureBox):
@@ -538,11 +649,29 @@ class Mainapp(MDApp):
         Window.bind(on_keyboard=self.on_key)
         sm.add_widget(MainScreen(name = 'MainScreen'))
         sm.add_widget(ReminderScreen(name = 'ReminderScreen'))
+        self.ads = KivMob(TestIds.APP)
+        self.ads.new_interstitial(TestIds.INTERSTITIAL)
+        self.ads.request_interstitial()
         return sm
 
 
     def on_start(self):
+        #Create this widgets ahead of time to increase performance
+        self.time_picker = MDTimePicker()
+        self.date_picker = MDDatePicker(min_year = 2021, max_year = 2022)
+        self.timing = ReminderTimingBlueprint()
+        self.time_picker.primary_color = (50/255,49/255,61/255,1)
+        self.time_picker.selector_color = (218/255,68/255,83/255,1)
+        self.time_picker.accent_color = (50/255,49/255,61/255,1)
+        self.time_picker.bind(on_save = IndividualReminderView.time_setter)
+        self.date_picker.bind(on_save = IndividualReminderView.date_setter)
+        self.timing.ids.time_picker.bind(on_press = self.time_picker.open)
+        self.timing.ids.type.bind(selected = IndividualReminderView.type_switcher)
+        self.created = False
+        self.timing.opacity = 1
         MainViewHandler.all_lists_loader(self, 0)
+
+
 
     def plus_button_callback(self, instance):
         if instance.icon == 'alarm':
