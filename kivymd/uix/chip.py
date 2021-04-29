@@ -241,7 +241,7 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
     active = BooleanProperty(False)
 
     _color = ColorProperty(None)
-    updating = False
+    name = StringProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -272,7 +272,7 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
 
 
     def update_color(self, *args):
-        if self.active and not self.updating:
+        if self.active:
             Animation(
                 color=self.theme_cls.primary_dark \
                 if not self.selected_chip_color \
@@ -286,9 +286,6 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
                 else self._color,
                 d=0.3
                 ).start(self)
-
-
-
 
     def on_icon(self, instance, value):
         def remove_icon(interval):

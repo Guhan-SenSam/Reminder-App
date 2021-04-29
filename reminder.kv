@@ -159,7 +159,6 @@
     BoxLayout:
         id:holder
         on_size:root.height = self.minimum_height+100
-        cols:1
         height:self.minimum_height
         spacing:dp(20)
         orientation:'vertical'
@@ -248,6 +247,7 @@
         md_bg_color:50/255,49/255,61/255,1
 
     MDIconButton:
+        id:remove_button
         icon:'minus'
         md_bg_color:50/255,49/255,61/255,1
         theme_text_color: "Custom"
