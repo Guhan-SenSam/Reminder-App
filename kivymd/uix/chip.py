@@ -246,7 +246,7 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.bind(active = self.update_color)
-        Clock.schedule_once(self.set_color)
+        Clock.schedule_once(self.set_color, 0)
 
     def set_color(self, *args):
         self._color = self. self.theme_cls.primary_color \
@@ -265,11 +265,11 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
                         size=("26dp", "26dp"),
                         font_size=sp(20),
                     ))
+            self.parent.selected.append(self.text)
         else:
             self.color = self.theme_cls.primary_color \
                          if not self._color \
                          else self._color
-
 
     def update_color(self, *args):
         if self.active:
@@ -279,6 +279,10 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
                 else self.selected_chip_color,
                 d=0.3
                 ).start(self)
+            if self.parent.multiple:
+                self.parent.selected.append(self.text)
+            else:
+                self.parent.selected = [self.text]
         else:
             Animation(
                 color=self.theme_cls.primary_color \
@@ -286,6 +290,8 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
                 else self._color,
                 d=0.3
                 ).start(self)
+            if self.parent.multiple:
+                self.parent.selected.remove(self.text)
 
     def on_icon(self, instance, value):
         def remove_icon(interval):
@@ -303,21 +309,14 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
                     if md_chip_container.multiple == True:
                         if not self.active:
                             self.active = True
-                            md_chip_container.selected.append(self.text)
-                            self.update_color()
                         else:
-                            md_chip_container.selected.remove(self.text)
                             self.active = False
-                            self.update_color()
                     else:
                         if not self.active:
                             self.active = True
-                            self.set_color()
-                            md_chip_container.selected = [self.text,]
                             for chip in md_chip_container.children:
                                 if chip is not self:
                                     chip.active = False
-                                    chip.update_color()
                 else:
                     self.dispatch('on_press')
                     self.dispatch('on_release')
