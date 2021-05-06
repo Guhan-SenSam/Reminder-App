@@ -16,11 +16,18 @@ Usage
 
 .. code-block:: kv
 
-    MDChip:
-        text: 'Coffee'
-        color: .4470588235118, .1960787254902, 0, 1
-        icon: 'coffee'
-        on_release: app.callback_for_menu_items(self)
+    MDChipContainer:
+        type:'action'
+        MDChip:
+            text: 'Coffee'
+            color: .4470588235118, .1960787254902, 0, 1
+            icon: 'coffee'
+            on_release: app.callback_for_menu_items(self)
+
+Here the chip is inside the ``'MDChipContainer'``. It acts as a container and contains all MDChips
+inside it.There are two types of ``'MDChip'``. They are:
+-action chips (as shown above)
+-selection chips
 
 The user function takes two arguments - the object and the text of the chip:
 
@@ -69,12 +76,18 @@ Chips with check
 .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/chip-check-icon.gif
     :align: center
 
-Choose chip
+.. Note:: `Checkmarks will only be shown if ``'multiple'`` is true.`_
+
+Selection chip
 -----------
+
+Setting ``'mode'`` of ``'MDChipContainer'`` to choice will allow for chips to be selected.
+Defualt only one chip can be selected.
 
 .. code-block:: kv
 
-    MDChooseChip:
+    MDChipContainer:
+        type:'choice'
 
         MDChip:
             text: 'Earth'
@@ -93,6 +106,8 @@ Choose chip
 
 .. image:: https://github.com/HeaTTheatR/KivyMD-data/raw/master/gallery/kivymddoc/chip-shoose-icon.gif
     :align: center
+
+Using ``'multiple'`` allows for multiple chips to be selected at once.
 
 .. Note:: `See full example <https://github.com/kivymd/KivyMD/wiki/Components-Chip>`_
 """
@@ -239,6 +254,12 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
     """
 
     active = BooleanProperty(False)
+    """
+    If the MDChip is currently selected or not.
+
+    :attr:`active` is an :class:`~kivy.properties.BooleanProperty`
+    and defaults to `False`.
+    """
 
     _color = ColorProperty(None)
     name = StringProperty(None)
@@ -356,7 +377,7 @@ class MDChipContainer(BoxLayout):
 
     selected = ListProperty()
     """
-    The list of all selected chips.
+    The list of all selected chips.Read only property.
 
     :attr:`radius` is a :class:`~kivy.properties.ListProperty` and
     defaults to `[]`.
