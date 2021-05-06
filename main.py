@@ -351,6 +351,7 @@ class IndividualReminderView():
         Remindervar = sm.get_screen('ReminderScreen')
         Remindervar.ids.container.add_widget(self.timing)
         self.timing.opacity = 0
+        self.timing.ids.type.bind(selected = IndividualReminderView.type_switcher)
         self.reminder_dates=eval(self.reminder_data[2])
         self.timing.ids.time_picker.text = self.reminder_data[3]
         self.time_picker.set_time(datetime.datetime.strptime(self.reminder_data[3], '%I:%M %p'))
@@ -461,6 +462,7 @@ class IndividualReminderView():
 
     def back_op(self, caller):
         Remindervar = sm.get_screen('ReminderScreen')
+        self.timing.ids.type.unbind(selected = IndividualReminderView.type_switcher)
         Remindervar.ids.container.clear_widgets()
         self.timing.ids.days_container.clear_widgets()
         if len(self.timing.ids.holder.children) == 5:
@@ -634,18 +636,34 @@ class Creator():
 
     def load_timing(self,instance):
         Remindervar = sm.get_screen('ReminderScreen')
-        self.timing.ids.type.bind(selected = partial(Creator.changer, self))
         Remindervar.ids.container.add_widget(self.timing)
         Clock.schedule_once(partial(Creator.load_saving, self),.3)
 
     def changer(self, instance, value):
-        if value == 'Days':
+        print(value)
+        if value == ['Days']:
+            data = [['M','Monday'],['T','Tuesday'],['W','Wednesday'],['T','Thursday'],['F','Friday'],['S','Saturday'],['S','Sunday']]
             Creator.day_adder(self,data)
-        elif value == 'Dates':
+        elif value == ['Dates']:
             Creator.date_adder(self)
 
     def day_adder(self, data, *args):
-        pass
+        Remindervar = sm.get_screen('ReminderScreen')
+        if data:
+            ele = MDChip(text = data[0][0],
+                         selected_chip_color = (218/255,68/255,83/255,1),
+                         color = (50/255,49/255,61/255,1),
+                         icon = '',
+                         name = data[0][1],
+                         )
+            self.timing.ids.days_container.add_widget(ele)
+            del data[0]
+            self.create_day_event = Clock.schedule_once(partial(IndividualReminderView.day_adder, self, data), 0)
+        else:
+            self.create_day_event.cancel()
+            self.created = True
+            anim1 = Animation(opacity = 1, d = .3)
+            anim1.start(self.timing)
 
 
     def load_saving(self, instance):
@@ -755,7 +773,6 @@ class Mainapp(MDApp):
         self.time_picker.bind(on_save = IndividualReminderView.time_setter)
         self.date_picker.bind(on_save = IndividualReminderView.date_setter)
         self.timing.ids.time_picker.bind(on_press = self.time_picker.open)
-        self.timing.ids.type.bind(selected = IndividualReminderView.type_switcher)
         self.created = False
         self.timing.opacity = 1
         self.saving = ReminderSaveBlueprint()
