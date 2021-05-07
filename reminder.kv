@@ -71,6 +71,8 @@
         icon: "plus"
         callback: app.plus_button_callback
         root_button_anim: True
+        md_bg_color: 218/255,68/255,83/255, 1
+
 
 
 <ReminderScreen>:
@@ -85,6 +87,11 @@
         id:back_button
         icon:'arrow-left'
         pos_hint:{'center_x':.1, "center_y":.94}
+
+    MDIconButton:
+        id:delete_button
+        icon:'delete'
+        pos_hint:{'center_x':.9, "center_y":.94}
 
     ScrollView:
         size_hint:1, None
