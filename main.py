@@ -1,6 +1,6 @@
 from kivy.config import Config
-Config.set('modules', 'monitor', ' ')
-Config.set('graphics', 'maxfps', '100')
+# Config.set('modules', 'monitor', ' ')
+# Config.set('graphics', 'maxfps', '100')
 from kivymd.app import MDApp
 from kivymd.uix.card import MDCard
 from kivymd.uix.button import MDFloatingActionButtonSpeedDial
@@ -31,7 +31,10 @@ import threading
 import time
 import datetime
 import re
+import random
 
+if platform == 'android':
+    from reminderscheduler import ReminderScheduler
 
 connection = sqlite3.connect('reminder.db')
 
@@ -532,19 +535,31 @@ class IndividualReminderView():
     def save_reminder(self,caller):
         mycursor.execute("DELETE FROM {} WHERE creation_order = {}".format(current_list, self.current_reminder))
         if self.description.ids.description.text == '' or self.description.ids.description.text.isspace():
-            insert_command = 'INSERT INTO {} (title,description,date, time, color, state) VALUES("{}"," ","{}","{}", 0, 0)'.format(
+            insert_command = 'INSERT INTO {} (title,description,date, time,rem_id,color, state) VALUES("{}"," ","{}","{}", {},0, 0)'.format(
                                 current_list, self.heading.ids.heading.text,
                                 self.new_timings,
-                                self.timing.ids.time_picker.text
+                                self.timing.ids.time_picker.text,
+                                self.reminder_data[-1]
                                 )
         else:
-            insert_command = 'INSERT INTO {} (title,description,date, time, color, state) VALUES("{}","{}","{}","{}", 0, 0)'.format(
+            insert_command = 'INSERT INTO {} (title,description,date, time,rem_id,color, state) VALUES("{}","{}","{}","{}", {},0, 0)'.format(
                                 current_list, self.heading.ids.heading.text,
                                 self.description.ids.description.text, self.new_timings,
-                                self.timing.ids.time_picker.text
+                                self.timing.ids.time_picker.text,
+                                self.reminder_data[-1]
                                 )
         mycursor.execute(insert_command)
         connection.commit()
+        if not self.new_timings: #We are saving nothing into the database so clear all previous reminders
+            if eval(self.reminder_data[2])[0].isalpha():
+                AlarmDateTimeHandler.remove_all(self,self.reminder_data[-1], True)
+            else:
+                AlarmDateTimeHandler.remove_all(self,self.reminder_data[-1], False)
+        elif self.new_timings[0].isalpha():
+            AlarmDateTimeHandler.days_handler(self,self.new_timings, self.timing.ids.timing.text, 1)
+        else:
+            AlarmDateTimeHandler.dates_handler(self,self.new_timings, self.timing.ids.timing.text, 1)
+
         OpenListView.view_updater(self)
         IndividualReminderView.back_op(self, None)
 
@@ -620,7 +635,8 @@ class Creator():
                 time BLOB,
                 creation_order INTEGER PRIMARY KEY AUTOINCREMENT,
                 color INTEGER NOT NULL,
-                state INTEGER NOT NULL)'''.format(new_name))
+                state INTEGER NOT NULL,
+                id INTEGER NOT NULL UNIQUE)'''.format(new_name))
 
             except:
                 toast("This list already exists")
@@ -747,9 +763,6 @@ class Creator():
         self.date_picker.open()
         self.current_editing = instance
 
-    def time_setter(instance,time):
-        self = MDApp.get_running_app()
-        self.timing.ids.time_picker.text = time.strftime('%I:%M %p')
 
     def date_setter(self,date,date_range):
         self = MDApp.get_running_app()
@@ -786,6 +799,7 @@ class Creator():
                 Creator.saver(self)
     def saver(self):
         new_dates = []
+        new_reminder_id = random.randint(-32768, 32768)
         if self.timing.ids.days.active == True:
             for day in self.timing.ids.days_container.children:
                 if day.active == True:
@@ -796,14 +810,22 @@ class Creator():
         else:
             new_dates = []
         description = ' ' if self.description.ids.description.text == '' else self.description.ids.description.text
-        mycursor.execute( 'INSERT INTO {} (title,description,date, time, color, state) VALUES("{}","{}","{}","{}", 0, 0)'.format(
+        mycursor.execute( 'INSERT INTO {} (title,description,date, time, rem_id,color, state) VALUES("{}","{}","{}","{}", {},0,0)'.format(
                 current_list,
                 self.heading.ids.heading.text,
                 description,
                 new_dates,
                 self.timing.ids.time_picker.text,
+                new_reminder_id
         ))
         connection.commit()
+
+        #Update the timing in the alarm manager
+        if platform == 'android':
+            if new_dates[0].isalpha():
+                AlarmDateTimeHandler.days_handler(self,new_dates, self.timing.ids.time_picker.text, new_reminder_id, 0)
+            else:
+                AlarmDateTimeHandler.dates_handler(self,new_dates, self.timing.ids.time_picker.text,new_reminder_id, 0)
         OpenListView.view_updater(self)
         Creator.back_op(self,None)
 
@@ -820,6 +842,62 @@ class Creator():
         Remindervar.ids.back_button.unbind(on_release = Creator.back_op)
         self.saving.ids.save_button.unbind(on_release = Creator.save)
         self.saving.ids.cancel_button.unbind(on_release = Creator.back_op)
+
+class AlarmDateTimeHandler():
+
+    def dates_handler(self,dates,time, id, mode):
+        alarm_id = id
+        for alarm_date in dates:
+            if mode == 0: #Just creating a new reminder no need to clear previous alarms
+                ReminderScheduler.schedule(alarm_id, self.heading.ids.heading.text, self.description.ids.description.text, alarm_date, time)
+            else: #Old reminder is being edited so we have to clear older data and run new data
+                if not eval(self.reminder_data[2])[0]:
+                    ReminderScheduler.schedule(alarm_id, self.heading.ids.heading.text, self.description.ids.description.text, alarm_date, time)
+                elif eval(self.reminder_data[2])[0].isalpha():
+                    self.remove_all(alarm_id, False)
+                else:
+                    self.remove_all(alarm_id,False)
+            alarm_id+=1
+            alarm_id+1
+        pass
+
+    def remove_all(self, id, repeating):
+        if repeating:
+            ReminderScheduler.deschedule_repeating(delete_id)
+            delete_id+1
+        else:
+            ReminderScheduler.deschedule(delete_id)
+            delete_id+1
+
+    def days_handler(self,days, time,id, mode):
+        alarm_id = id
+        #Now we convert the days into number values
+        for alarm_day in days:
+            if alarm_day == 'Monday':
+                day_number = 1
+            elif alarm_day == 'Tueday':
+                day_number = 2
+            elif alarm_day == 'Wednesday':
+                day_number = 3
+            elif alarm_day == 'Thursday':
+                day_number = 4
+            elif alarm_day == 'Friday':
+                day_number = 5
+            elif alarm_day == 'Saturday':
+                day_number = 6
+            else:
+                day_number = 7
+            if mode ==0:
+                ReminderScheduler.schedule_repeating(alarm_id, self.heading.ids.heading.text, self.description.ids.description.text, day_number,time)
+
+            else:
+                if not eval(self.reminder_data[2])[0]:
+                    ReminderScheduler.schedule_repeating(alarm_id, self.heading.ids.heading.text, self.description.ids.description.text, day_number, time)
+                elif eval(self.reminder_data[2])[0].isalpha():
+                    self.remove_all(alarm_id, True)
+                else:
+                    self.deschedule(alarm_id, True)
+            alarm_id+=1
 
 
 class AndroidHandler():
@@ -911,8 +989,8 @@ class Mainapp(MDApp):
         sm.add_widget(ReminderScreen(name = 'ReminderScreen'))
         return sm
 
-
     def on_start(self):
+
         #Create this widgets ahead of time to increase performance
         self.heading = ReminderTitleBlueprint()
         self.description = ReminderDescriptionBlueprint()
@@ -948,4 +1026,6 @@ class Mainapp(MDApp):
 
 if platform != 'android':
     Window.size = (360,640)
-Mainapp().run()
+
+if __name__ == '__main__':
+    Mainapp().run()
