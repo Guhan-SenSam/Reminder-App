@@ -89,7 +89,7 @@
 
     MDIconButton:
         id:delete_button
-        icon:'delete'
+        icon:'trash-can-outline'
         pos_hint:{'center_x':.9, "center_y":.94}
 
     ScrollView:
@@ -159,7 +159,7 @@
     elevation:10
     size_hint:1, None
     orientation:'vertical'
-    padding:dp(50),dp(50),dp(50),dp(50)
+    padding:50,50,50,50
 
     BoxLayout:
         id:holder
@@ -470,6 +470,7 @@
         size_hint: 0.8,0.15
         color_mode: 'custom'
         line_color_focus:218/255,68/255,83/255, 1
+        current_hint_text_color:1,1,1,1
         font_name:'Roboto-Black.ttf'
         font_size:'25sp'
 
