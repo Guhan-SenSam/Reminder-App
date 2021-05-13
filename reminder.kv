@@ -74,7 +74,6 @@
         md_bg_color:218/255,68/255,83/255,1
         pos_hint:{'center_x':.85, 'center_y':.08}
 
-
 <ReminderScreen>:
     canvas:
         Color:
@@ -96,17 +95,16 @@
     ScrollView:
         size_hint:1, None
         width:wd.width-dp(20)
-        height:wd.height-dp(100)
+        height:wd.height-dp(80)
         pos:self.parent.pos
         GridLayout:
             id:container
             pos:self.parent.pos
             size_hint_y:None
-            height:self.minimum_height
+            height:self.minimum_height+dp(100)
             cols:1
             padding:30,0,30,0
             spacing:'20dp'
-
 
 <ReminderTitleBlueprint>:
     radius:60,60,60,60
@@ -191,39 +189,45 @@
             text_color:218/255,68/255,83/255,1
             md_bg_color:50/255,49/255,61/255,1
 
-        Label:
-            id:label2
-            text:'On These:'
-            size: self.texture_size
-            size_hint:None,None
-            font_name:'Roboto-Black.ttf'
-            font_size:sp(22)
-
-        MDChipContainer:
-            type:'choice'
-            id:type
-            spacing:dp(5)
+        GridLayout:
             height:self.minimum_height
-            size_hint:None,None
+            cols:3
+            spacing:'10dp'
+            size_hint_y:None
 
-            MDChip:
-                id:days
-                text: 'Days'
-                icon: 'calendar-range'
-                selected_chip_color:218/255,68/255,83/255,1
-                color:50/255,49/255,61/255,1
-            MDChip:
-                id:dates
-                text: 'Dates'
-                icon: 'calendar'
-                selected_chip_color:218/255,68/255,83/255,1
-                color:50/255,49/255,61/255,1
-            MDChip:
-                id:none
-                text:'None'
-                icon:'close-circle-outline'
-                selected_chip_color:218/255,68/255,83/255,1
-                color:50/255,49/255,61/255,1
+
+            Label:
+                id:label2
+                text:'On These:'
+                size: self.texture_size
+                size_hint:None,None
+                font_name:'Roboto-Black.ttf'
+                font_size:sp(22)
+
+            MDChipContainer:
+                type:'choice'
+                id:type
+                spacing:dp(5)
+
+                MDChip:
+                    id:days
+                    text: 'Days'
+                    icon: 'calendar-range'
+                    selected_chip_color:218/255,68/255,83/255,1
+                    color:50/255,49/255,61/255,1
+                MDChip:
+                    id:dates
+                    text: 'Dates'
+                    icon: 'calendar'
+                    selected_chip_color:218/255,68/255,83/255,1
+                    color:50/255,49/255,61/255,1
+                MDChip:
+                    id:none
+                    text:'None'
+                    icon:'close-circle-outline'
+                    selected_chip_color:218/255,68/255,83/255,1
+                    color:50/255,49/255,61/255,1
+
         MDChipContainer:
             id:days_container
             type:'choice'
@@ -232,7 +236,6 @@
             height:self.minimum_height
             spacing:dp(5)
             pos_hint:{'center_x':.2}
-
 
 <ReminderDatesBlueprint>:
     height:self.minimum_height
@@ -251,11 +254,10 @@
 
     MDIconButton:
         id:remove_button
-        icon:'minus'
+        icon:'calendar-remove'
         md_bg_color:50/255,49/255,61/255,1
         theme_text_color: "Custom"
         text_color:218/255,68/255,83/255,1
-
 
 <ReminderSaveBlueprint>:
     radius:40,40,40,40
@@ -282,10 +284,6 @@
         md_bg_color:218/255,68/255,83/255,1
         text_color:50/255,49/255,61/255,1
         pos_hint:{'center_y':.5}
-
-
-
-
 
 <ListContent>:
     pos:self.pos
@@ -355,7 +353,6 @@
     elevation:0
     radius:60,60,60,60
 
-
 <ListViewBanner>:
     elevation:10
     md_bg_color:44/250,62/250,80/250, 1
@@ -387,7 +384,6 @@
             icon:'trash-can-outline'
             pos_hint:{"center_x":.9, "center_y":.5}
 
-
 <ListViewBlueprint>:
     viewclass: 'IndivualReminderElementBlueprint'
     data:
@@ -401,9 +397,6 @@
         padding: 10,10,10,0
         spacing:'5dp'
 
-
-
-
 <IndivualReminderElementBlueprint>:
     text_title: ''
     text_description:" "
@@ -416,51 +409,48 @@
     padding:0,0,0,0
     font:'Roboto-Medium.ttf'
     fontsize:'18sp'
-    MDCard:
-        md_bg_color:root.md_bg_color
-        elevation:root.elevation
-        radius:40,40,40,40
 
+    MDCheckbox:
+        id:check_box
+        checkbox_icon_normal:"checkbox-blank-circle-outline"
+        checkbox_icon_down:"checkbox-marked-circle"
+        size: "60dp", "60dp"
+        size_hint:None, None
+        pos_hint:{'center_y':.5}
+        active:self.parent.completed
+        opacity:root.show_button
+        on_release:app.checker(self)
 
-        MDCheckbox:
-            id:check_box
-            checkbox_icon_normal:"checkbox-blank-circle-outline"
-            checkbox_icon_down:"checkbox-marked-circle"
-            size: "60dp", "60dp"
-            size_hint:None, None
-            pos_hint:{'center_y':.5}
-            active:root.completed
-            opacity:root.show_button
+    BoxLayout:
+        padding:10,0,0,0
+        orientation:"vertical"
+        size_hint:1,1
+        separation:'20dp'
 
-        BoxLayout:
-            padding:10,0,0,0
-            orientation:"vertical"
-            size_hint:1,1
-            separation:'20dp'
-
-            Label:
-                id:title
-                text:root.text_title
-                size_hint:None,None
-                size:self.texture_size
-                text_size:self.parent.parent.width-dp(70), dp(20)
-                font_name:root.font
-                font_size:root.fontsize
-                shorten:True
-                shorten_from:"right"
-                halign:root.alignment
-            Label:
-                id:desc
-                text:root.text_description
-                size_hint:None,None
-                size:self.texture_size
-                text_size:self.parent.parent.width-dp(70), dp(40)
-                font_name:"Roboto-Regular.ttf"
-                color:1,1,1,0.5
-                font_size:"16sp"
-                split_str:' '
-                valign:"top"
-
+        Label:
+            id:title
+            text:root.text_title
+            size_hint:None,None
+            size:self.texture_size
+            text_size:self.parent.parent.width-dp(70), dp(20)
+            font_name:root.font
+            font_size:root.fontsize
+            shorten:True
+            shorten_from:"right"
+            halign:root.alignment
+            strikethrough:True if root.completed else False
+        Label:
+            id:desc
+            text:root.text_description
+            size_hint:None,None
+            size:self.texture_size
+            text_size:self.parent.parent.width-dp(70), dp(40)
+            font_name:"Roboto-Regular.ttf"
+            color:1,1,1,0.5
+            font_size:"16sp"
+            split_str:' '
+            valign:"top"
+            strikethrough:True if root.completed else False
 
 <NewListBlueprint>:
     size_hint:1,1
@@ -480,7 +470,6 @@
         size_hint: 0.8,0.15
         color_mode: 'custom'
         line_color_focus:218/255,68/255,83/255, 1
-        current_hint_text_color:1,1,1,1
         font_name:'Roboto-Black.ttf'
         font_size:'25sp'
 

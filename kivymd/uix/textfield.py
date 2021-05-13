@@ -1063,111 +1063,110 @@ class MDTextField(ThemableBehavior, TextInput):
         self._right_msg_lbl.width = self.width
 
     def on_focus(self, *args):
-        pass
-        # disabled_hint_text_color = self.theme_cls.disabled_hint_text_color
-        # Animation.cancel_all(
-        #     self, "_line_width", "_hint_y", "_hint_lbl_font_size"
-        # )
-        # self._set_text_len_error()
-        #
-        # if self.focus:
-        #     if not self._get_has_error():
-        #
-        #         def on_progress(*args):
-        #             self._line_blank_space_right_point = (
-        #                 self._hint_lbl.width + dp(5)
-        #             )
-        #
-        #         animation = Animation(
-        #             _line_blank_space_left_point=self._hint_lbl.x - dp(5),
-        #             _current_hint_text_color=self.line_color_focus,
-        #             _fill_color=self.fill_color[:-1]
-        #             + [self.fill_color[-1] - 0.1],
-        #             duration=0.2,
-        #             t="out_quad",
-        #         )
-        #         animation.bind(on_progress=on_progress)
-        #         animation.start(self)
-        #     self.has_had_text = True
-        #     Animation.cancel_all(
-        #         self, "_line_width", "_hint_y", "_hint_lbl_font_size"
-        #     )
-        #     if not self.text:
-        #         self._anim_lbl_font_size(dp(14), sp(12))
-        #     Animation(
-        #         _line_width=self.width,
-        #         duration=(0.2 if self.line_anim else 0),
-        #         t="out_quad",
-        #     ).start(self)
-        #     if self._get_has_error():
-        #         self._anim_current_error_color(self.error_color)
-        #         if self.helper_text_mode == "on_error" and (
-        #             self.error or self._text_len_error
-        #         ):
-        #             self._anim_current_error_color(self.error_color)
-        #         elif (
-        #             self.helper_text_mode == "on_error"
-        #             and not self.error
-        #             and not self._text_len_error
-        #         ):
-        #             self._anim_current_error_color((0, 0, 0, 0))
-        #         elif self.helper_text_mode in ("persistent", "on_focus"):
-        #             self._anim_current_error_color(disabled_hint_text_color)
-        #     else:
-        #         self._anim_current_right_lbl_color(disabled_hint_text_color)
-        #         Animation(
-        #             duration=0.2, _current_hint_text_color=self.line_color_focus
-        #         ).start(self)
-        #         if self.helper_text_mode == "on_error":
-        #             self._anim_current_error_color((0, 0, 0, 0))
-        #         if self.helper_text_mode in ("persistent", "on_focus"):
-        #             self._anim_current_error_color(disabled_hint_text_color)
-        # else:
-        #     Animation(
-        #         _fill_color=self.fill_color[:-1] + [self.fill_color[-1] + 0.1],
-        #         duration=0.2,
-        #         t="out_quad",
-        #     ).start(self)
-        #     if not self.text:
-        #         self._anim_lbl_font_size(dp(38), sp(16))
-        #         Animation(
-        #             _line_blank_space_right_point=0,
-        #             _line_blank_space_left_point=0,
-        #             duration=0.2,
-        #             t="out_quad",
-        #         ).start(self)
-        #     if self._get_has_error():
-        #         self._anim_get_has_error_color(self.error_color)
-        #         if self.helper_text_mode == "on_error" and (
-        #             self.error or self._text_len_error
-        #         ):
-        #             self._anim_current_error_color(self.error_color)
-        #         elif (
-        #             self.helper_text_mode == "on_error"
-        #             and not self.error
-        #             and not self._text_len_error
-        #         ):
-        #             self._anim_current_error_color((0, 0, 0, 0))
-        #         elif self.helper_text_mode == "persistent":
-        #             self._anim_current_error_color(disabled_hint_text_color)
-        #         elif self.helper_text_mode == "on_focus":
-        #             self._anim_current_error_color((0, 0, 0, 0))
-        #     else:
-        #         Animation(duration=0.2, color=(1, 1, 1, 1)).start(
-        #             self._hint_lbl
-        #         )
-        #         self._anim_get_has_error_color()
-        #         if self.helper_text_mode == "on_error":
-        #             self._anim_current_error_color((0, 0, 0, 0))
-        #         elif self.helper_text_mode == "persistent":
-        #             self._anim_current_error_color(disabled_hint_text_color)
-        #         elif self.helper_text_mode == "on_focus":
-        #             self._anim_current_error_color((0, 0, 0, 0))
-        #         Animation(
-        #             _line_width=0,
-        #             duration=(0.2 if self.line_anim else 0),
-        #             t="out_quad",
-        #         ).start(self)
+        disabled_hint_text_color = self.theme_cls.disabled_hint_text_color
+        Animation.cancel_all(
+            self, "_line_width", "_hint_y", "_hint_lbl_font_size"
+        )
+        self._set_text_len_error()
+
+        if self.focus:
+            if not self._get_has_error():
+
+                def on_progress(*args):
+                    self._line_blank_space_right_point = (
+                        self._hint_lbl.width + dp(5)
+                    )
+
+                animation = Animation(
+                    _line_blank_space_left_point=self._hint_lbl.x - dp(5),
+                    _current_hint_text_color=self.line_color_focus,
+                    _fill_color=self.fill_color[:-1]
+                    + [self.fill_color[-1] - 0.1],
+                    duration=0.2,
+                    t="out_quad",
+                )
+                animation.bind(on_progress=on_progress)
+                animation.start(self)
+            self.has_had_text = True
+            Animation.cancel_all(
+                self, "_line_width", "_hint_y", "_hint_lbl_font_size"
+            )
+            if not self.text:
+                self._anim_lbl_font_size(dp(14), sp(12))
+            Animation(
+                _line_width=self.width,
+                duration=(0.2 if self.line_anim else 0),
+                t="out_quad",
+            ).start(self)
+            if self._get_has_error():
+                self._anim_current_error_color(self.error_color)
+                if self.helper_text_mode == "on_error" and (
+                    self.error or self._text_len_error
+                ):
+                    self._anim_current_error_color(self.error_color)
+                elif (
+                    self.helper_text_mode == "on_error"
+                    and not self.error
+                    and not self._text_len_error
+                ):
+                    self._anim_current_error_color((0, 0, 0, 0))
+                elif self.helper_text_mode in ("persistent", "on_focus"):
+                    self._anim_current_error_color(disabled_hint_text_color)
+            else:
+                self._anim_current_right_lbl_color(disabled_hint_text_color)
+                Animation(
+                    duration=0.2, _current_hint_text_color=self.line_color_focus
+                ).start(self)
+                if self.helper_text_mode == "on_error":
+                    self._anim_current_error_color((0, 0, 0, 0))
+                if self.helper_text_mode in ("persistent", "on_focus"):
+                    self._anim_current_error_color(disabled_hint_text_color)
+        else:
+            Animation(
+                _fill_color=self.fill_color[:-1] + [self.fill_color[-1] + 0.1],
+                duration=0.2,
+                t="out_quad",
+            ).start(self)
+            if not self.text:
+                self._anim_lbl_font_size(dp(38), sp(16))
+                Animation(
+                    _line_blank_space_right_point=0,
+                    _line_blank_space_left_point=0,
+                    duration=0.2,
+                    t="out_quad",
+                ).start(self)
+            if self._get_has_error():
+                self._anim_get_has_error_color(self.error_color)
+                if self.helper_text_mode == "on_error" and (
+                    self.error or self._text_len_error
+                ):
+                    self._anim_current_error_color(self.error_color)
+                elif (
+                    self.helper_text_mode == "on_error"
+                    and not self.error
+                    and not self._text_len_error
+                ):
+                    self._anim_current_error_color((0, 0, 0, 0))
+                elif self.helper_text_mode == "persistent":
+                    self._anim_current_error_color(disabled_hint_text_color)
+                elif self.helper_text_mode == "on_focus":
+                    self._anim_current_error_color((0, 0, 0, 0))
+            else:
+                Animation(duration=0.2, color=(1, 1, 1, 1)).start(
+                    self._hint_lbl
+                )
+                self._anim_get_has_error_color()
+                if self.helper_text_mode == "on_error":
+                    self._anim_current_error_color((0, 0, 0, 0))
+                elif self.helper_text_mode == "persistent":
+                    self._anim_current_error_color(disabled_hint_text_color)
+                elif self.helper_text_mode == "on_focus":
+                    self._anim_current_error_color((0, 0, 0, 0))
+                Animation(
+                    _line_width=0,
+                    duration=(0.2 if self.line_anim else 0),
+                    t="out_quad",
+                ).start(self)
 
     def on_disabled(self, *args):
         if self.disabled:

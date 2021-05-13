@@ -145,7 +145,6 @@ class MainViewHandler():
             ele = collections.deque(all_lists)
             ele.rotate(-1)
             all_lists = ele
-            swiping = False
             Clock.schedule_once(partial(MainViewHandler.load_next_list_title,self, 0),.2)
         elif operation == 1:
             swiping = False
@@ -243,6 +242,7 @@ class OpenListView():
         Mainscreenvar.ids[name].children[0].add_widget(self.list_view_element)
         swiping = True
         current_app_location = 'IndividualListView'
+
     def sort_by_creation(self):
         connection = sqlite3.connect('reminder.db')
         mycursor = connection.cursor()
@@ -260,54 +260,27 @@ class OpenListView():
         data = not_completed_reminders + completed_reminders
         self.list_view_element = ListViewBlueprint()
         reminders_data_list = []
-        count = 0
         for reminder in data:
             if reminder[1] != None:
                 if reminder[6] == 0:
-                    ele = {'text_title':reminder[0], 'text_description':reminder[1],
-                            'md_bg_color':(0,0,0,0), 'elevation':0,'name':reminder[4]}
-
-                elif reminder[6] == 1 and count == 0:
-                    heading_ele = {'text_title':'Completed Reminders',
-                            'md_bg_color':(218/255,68/255,83/255, 1), 'elevation':12,
-                            'show_button':0,'padding':(50,0,50,0), 'alignment':'center',
-                            'font':'Roboto-Black.ttf', 'fontsize':'22sp'}
-                    reminders_data_list.append(heading_ele)
-                    ele = {'text_title':reminder[0], 'text_description':reminder[1],
-                            'md_bg_color':(0,0,0,0), 'elevation':0,'completed':True,
+                    ele = {'text_title':reminder[0], 'text_description':reminder[1],'completed':False,
                             'name':reminder[4]}
-                    count = 1
-
-                elif reminder[6] == 1 and count == 1:
-                    ele = {'text_title':reminder[0], 'text_description':reminder[1],
-                            'md_bg_color':(0,0,0,0), 'elevation':0,'completed':True,
+                else:
+                    ele = {'text_title':reminder[0], 'text_description':reminder[1],'completed':True,
                             'name':reminder[4]}
-
             else:
                 if reminder[6] == 0:
-                    ele = {'text_title':reminder[0],
-                            'md_bg_color':(0,0,0,0), 'elevation':0, 'name':reminder[4]}
+                    ele = {'text_title':reminder[0],'completed':False,'name':reminder[4]}
+                else:
+                    ele = {'text_title':reminder[0], 'completed':True, 'name':reminder[4]}
 
-                elif reminder[6] == 1 and count == 0:
-                    heading_ele = {'text_title':'Completed Reminders',
-                            'md_bg_color':(218/255,68/255,83/255, 1), 'elevation':12,
-                            'show_button':0, 'padding':(50,0,50,0), 'alignment':'center',
-                            'font':'Roboto-Black.ttf', 'fontsize':'22sp'}
-                    reminders_data_list.append(heading_ele)
-                    ele = {'text_title':reminder[0],'md_bg_color':(0,0,0,0),
-                            'elevation':0, 'completed':True, 'name':reminder[4]}
-                    count = 1
-
-                elif reminder[6] == 1 and count == 1:
-                    ele = {'text_title':reminder[0],'md_bg_color':(0,0,0,0),
-                            'elevation':0, 'completed':True, 'name':reminder[4]}
             reminders_data_list.append(ele)
         self.list_view_element.data = reminders_data_list
         connection.close()
 
 
     def back_op(self,caller):
-        global swiping, current_app_location
+        global current_app_location
         Mainscreenvar = sm.get_screen("MainScreen")
         anim1 = Animation(size_hint = (.85,.70), radius=(60,60,60,60), duration = .5, t = 'in_out_circ')
         anim2 = Animation(pos_hint = {'center_x':.45, 'center_y':.5}, duration = .7, t = 'in_out_circ')
@@ -332,8 +305,21 @@ class OpenListView():
         name = 'ele{}'.format(counter)
         OpenListView.list_view_loader_transition(self,None,2)
 
+    def reminder_complete_handler(self, instance):
+        if instance.parent.completed == True:
+            instance.parent.completed = False
+            mycursor.execute("UPDATE {} SET state = 0 WHERE creation_order = {}".format(all_lists[0], instance.parent.name))
+            connection.commit()
+
+        else:
+            instance.parent.completed = True
+            mycursor.execute("UPDATE {} SET state = 1 WHERE creation_order = {}".format(all_lists[0], instance.parent.name))
+            connection.commit()
+
 class IndividualReminderView():
     def screen_switcher(self,reminder):
+        global swiping
+        swiping = True
         sm.current = 'ReminderScreen'
         Clock.schedule_once(partial(IndividualReminderView.heading_loader, self, reminder),.4)
 
@@ -462,7 +448,7 @@ class IndividualReminderView():
 
         elif 'Days' in value and self.created:
             self.timing.ids.days_container.clear_widgets()
-            if len(self.timing.ids.holder.children) == 6:
+            if len(self.timing.ids.holder.children) == 5:
                 self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
             self.timing.ids.days_container.orientation = 'horizontal'
             tmp_data = [['M',"Monday"],['T',"Tuesday"],['W',"Wednesday"],
@@ -478,7 +464,7 @@ class IndividualReminderView():
 
         elif 'None' in value and self.created:
             self.timing.ids.days_container.clear_widgets()
-            if len(self.timing.ids.holder.children) == 6:
+            if len(self.timing.ids.holder.children) == 5:
                 self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
 
     def back_op(instance, *args):
@@ -487,7 +473,7 @@ class IndividualReminderView():
         self.timing.ids.type.unbind(selected = IndividualReminderView.type_switcher)
         Remindervar.ids.container.clear_widgets()
         self.timing.ids.days_container.clear_widgets()
-        if len(self.timing.ids.holder.children) == 6:
+        if len(self.timing.ids.holder.children) == 5:
             self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
         sm.current = 'MainScreen'
         sm.transition.direction = 'right'
@@ -689,7 +675,6 @@ class Creator():
         sm.current = 'ReminderScreen'
         Clock.schedule_once(partial(Creator.load_heading,self), .3)
 
-
     def load_heading(self, instance):
         Remindervar = sm.get_screen('ReminderScreen')
         Remindervar.ids.back_button.bind(on_release = Creator.back_op)
@@ -726,7 +711,7 @@ class Creator():
         if value == ['Days']:
             self.timing.ids.days_container.orientation = 'horizontal'
             self.timing.ids.days_container.clear_widgets()
-            if len(self.timing.ids.holder.children) == 6:
+            if len(self.timing.ids.holder.children) == 5:
                 self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
             data = [['M','Monday'],['T','Tuesday'],['W','Wednesday'],['T','Thursday'],['F','Friday'],['S','Saturday'],['S','Sunday']]
             Creator.day_adder(self,data)
@@ -735,7 +720,7 @@ class Creator():
             self.timing.ids.days_container.clear_widgets()
             Creator.date_adder(self)
         else:
-            if len(self.timing.ids.holder.children) == 6:
+            if len(self.timing.ids.holder.children) == 5:
                 self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
 
     def day_adder(self, data, *args):
@@ -848,7 +833,8 @@ class Creator():
 
         #Update the timing in the alarm manager
         if platform == 'android':
-            if new_dates: #Make sure we dont run the code if the reminder type is none
+            if new_dates:
+                 #Make sure we dont run the code if the reminder type is none
                 if new_dates[0].isalpha():
                     AlarmDateTimeHandler.days_handler(self,new_dates, self.timing.ids.time_picker.text, new_reminder_id, 0)
                 else:
@@ -866,7 +852,7 @@ class Creator():
         Remindervar = sm.get_screen('ReminderScreen')
         Remindervar.ids.container.clear_widgets()
         self.timing.ids.days_container.clear_widgets()
-        if len(self.timing.ids.holder.children) == 6:
+        if len(self.timing.ids.holder.children) == 5:
             self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
         sm.current = 'MainScreen'
         sm.transition.direction = 'right'
@@ -965,6 +951,8 @@ class IndivualReminderElementBlueprint(BoxLayout):
                 app = MDApp.get_running_app()
                 sm.transition.direction = 'left'
                 IndividualReminderView.screen_switcher(app,self.name)
+            else:
+                return super(IndivualReminderElementBlueprint, self).on_touch_down(touch)
 
 class IndividualListViewContentBlueprint(BoxLayout):
     pass
@@ -1037,8 +1025,6 @@ class Mainapp(MDApp):
         self.saving = ReminderSaveBlueprint()
         MainViewHandler.all_lists_loader(self, 0)
 
-
-
     def plus_button_callback(self):
         if current_app_location == 'MainScreen':
             MainViewHandler.slider(self, 1, None)
@@ -1051,6 +1037,9 @@ class Mainapp(MDApp):
             return True
         else:
             return False
+
+    def checker(self, instance):
+        OpenListView.reminder_complete_handler(self,instance)
 
 
 if platform != 'android':
