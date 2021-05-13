@@ -318,6 +318,7 @@ class OpenListView():
         anim3.start(Mainscreenvar.children[3].children[0])
         Mainscreenvar.ids[name].children[0].clear_widgets()
         current_app_location = 'MainScreen'
+        Mainscreenvar.ids.action_button.data = {'New List':'format-list-checkbox'}
         MainViewHandler.load_next_list_title(self, 1)
 
 
@@ -461,7 +462,7 @@ class IndividualReminderView():
 
         elif 'Days' in value and self.created:
             self.timing.ids.days_container.clear_widgets()
-            if len(self.timing.ids.holder.children) == 5:
+            if len(self.timing.ids.holder.children) == 6:
                 self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
             self.timing.ids.days_container.orientation = 'horizontal'
             tmp_data = [['M',"Monday"],['T',"Tuesday"],['W',"Wednesday"],
@@ -477,7 +478,7 @@ class IndividualReminderView():
 
         elif 'None' in value and self.created:
             self.timing.ids.days_container.clear_widgets()
-            if len(self.timing.ids.holder.children) == 5:
+            if len(self.timing.ids.holder.children) == 6:
                 self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
 
     def back_op(instance, *args):
@@ -486,7 +487,7 @@ class IndividualReminderView():
         self.timing.ids.type.unbind(selected = IndividualReminderView.type_switcher)
         Remindervar.ids.container.clear_widgets()
         self.timing.ids.days_container.clear_widgets()
-        if len(self.timing.ids.holder.children) == 5:
+        if len(self.timing.ids.holder.children) == 6:
             self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
         sm.current = 'MainScreen'
         sm.transition.direction = 'right'
@@ -550,15 +551,16 @@ class IndividualReminderView():
                                 )
         mycursor.execute(insert_command)
         connection.commit()
+
         if not self.new_timings: #We are saving nothing into the database so clear all previous reminders
             if eval(self.reminder_data[2])[0].isalpha():
                 AlarmDateTimeHandler.remove_all(self,self.reminder_data[-1], True)
             else:
                 AlarmDateTimeHandler.remove_all(self,self.reminder_data[-1], False)
         elif self.new_timings[0].isalpha():
-            AlarmDateTimeHandler.days_handler(self,self.new_timings, self.timing.ids.timing.text, 1)
+            AlarmDateTimeHandler.days_handler(self,self.new_timings, self.timing.ids.time_picker.text, self.reminder_data[-1], 1)
         else:
-            AlarmDateTimeHandler.dates_handler(self,self.new_timings, self.timing.ids.timing.text, 1)
+            AlarmDateTimeHandler.dates_handler(self,self.new_timings,self.timing.ids.time_picker.text, self.reminder_data[-1], 1)
 
         OpenListView.view_updater(self)
         IndividualReminderView.back_op(self, None)
@@ -613,7 +615,6 @@ class IndividualReminderView():
 class Creator():
     def create_new_list_load_ui(self):
         Mainscreenvar = sm.get_screen("MainScreen")
-        Mainscreenvar.ids.action_button.close_stack()
         anim1 = Animation(opacity = 0, duration = .3, t = 'in_out_circ')
         anim1.start(Mainscreenvar.ids.action_button)
         newlist = NewListBlueprint()
@@ -636,14 +637,26 @@ class Creator():
                 creation_order INTEGER PRIMARY KEY AUTOINCREMENT,
                 color INTEGER NOT NULL,
                 state INTEGER NOT NULL,
-                id INTEGER NOT NULL UNIQUE)'''.format(new_name))
+                rem_id INTEGER NOT NULL UNIQUE)'''.format(new_name))
+                Creator.reset_list_create(self, new_name)
+                try:
+                    plyer.vibrator.pattern(pattern = (0,.02,0.1,0.04,0.1,0.02))
+                except:
+                    pass
 
             except:
                 toast("This list already exists")
-            Creator.reset_list_create(self, new_name)
+                try:
+                    plyer.vibrator.pattern(pattern = (0,.04,0.06,0.03,0.04,0.02,0.02,0.01,))
+                except:
+                    pass
+
         else:
             toast("Please enter a proper list name")
-            plyer.vibrator.pattern(pattern = (0,.04,0.08,0.03,0.06,0.02,0.04,0.01,0.02))
+            try:
+                plyer.vibrator.pattern(pattern = (0,.04,0.06,0.03,0.04,0.02,0.02,0.01,))
+            except:
+                pass
 
 
     def reset_list_create(self, new_name):
@@ -704,6 +717,7 @@ class Creator():
         self.timing.ids.dates.active = False
         self.timing.ids.none.active = True
         self.timing.ids.type.bind(selected =Creator.changer)
+        # self.timing.ids.label1.font_size =
         Remindervar.ids.container.add_widget(self.timing)
         Clock.schedule_once(partial(Creator.load_saving, self),.3)
 
@@ -712,7 +726,7 @@ class Creator():
         if value == ['Days']:
             self.timing.ids.days_container.orientation = 'horizontal'
             self.timing.ids.days_container.clear_widgets()
-            if len(self.timing.ids.holder.children) == 5:
+            if len(self.timing.ids.holder.children) == 6:
                 self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
             data = [['M','Monday'],['T','Tuesday'],['W','Wednesday'],['T','Thursday'],['F','Friday'],['S','Saturday'],['S','Sunday']]
             Creator.day_adder(self,data)
@@ -721,7 +735,7 @@ class Creator():
             self.timing.ids.days_container.clear_widgets()
             Creator.date_adder(self)
         else:
-            if len(self.timing.ids.holder.children) == 5:
+            if len(self.timing.ids.holder.children) == 6:
                 self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
 
     def day_adder(self, data, *args):
@@ -784,15 +798,27 @@ class Creator():
         self = Mainapp.get_running_app()
         if self.heading.ids.heading.text.isspace() or self.heading.ids.heading.text == '':
             toast("Please enter a title")
+            try:
+                plyer.vibrator.pattern(pattern = (0,.04,0.06,0.03,0.04,0.02,0.02,0.01,))
+            except:
+                pass
         else:
             if self.timing.ids.days.active == True:
                 if self.timing.ids.days_container.selected== [] or self.timing.ids.time_picker.text == 'Time':
                     toast('Please choose some days and time')
+                    try:
+                        plyer.vibrator.pattern(pattern = (0,.04,0.06,0.03,0.04,0.02,0.02,0.01,))
+                    except:
+                        pass
                 else:
                     Creator.saver(self)
             elif self.timing.ids.dates.active == True:
                 if not len(self.timing.ids.days_container.children) or self.timing.ids.time_picker.text == 'Time':
                     toast("Please select a date and a time")
+                    try:
+                        plyer.vibrator.pattern(pattern = (0,.04,0.06,0.03,0.04,0.02,0.02,0.01,))
+                    except:
+                        pass
                 else:
                     Creator.saver(self)
             else:
@@ -822,19 +848,25 @@ class Creator():
 
         #Update the timing in the alarm manager
         if platform == 'android':
-            if new_dates[0].isalpha():
-                AlarmDateTimeHandler.days_handler(self,new_dates, self.timing.ids.time_picker.text, new_reminder_id, 0)
-            else:
-                AlarmDateTimeHandler.dates_handler(self,new_dates, self.timing.ids.time_picker.text,new_reminder_id, 0)
+            if new_dates: #Make sure we dont run the code if the reminder type is none
+                if new_dates[0].isalpha():
+                    AlarmDateTimeHandler.days_handler(self,new_dates, self.timing.ids.time_picker.text, new_reminder_id, 0)
+                else:
+                    AlarmDateTimeHandler.dates_handler(self,new_dates, self.timing.ids.time_picker.text,new_reminder_id, 0)
+        try:
+            plyer.vibrator.pattern(pattern = (0,.02,0.1,0.04,0.1,0.02))
+        except:
+            pass
         OpenListView.view_updater(self)
         Creator.back_op(self,None)
 
     def back_op(instance, *args):
+        global swiping
         self = Mainapp.get_running_app()
         Remindervar = sm.get_screen('ReminderScreen')
         Remindervar.ids.container.clear_widgets()
         self.timing.ids.days_container.clear_widgets()
-        if len(self.timing.ids.holder.children) == 5:
+        if len(self.timing.ids.holder.children) == 6:
             self.timing.ids.holder.remove_widget(self.timing.ids.holder.children[0])
         sm.current = 'MainScreen'
         sm.transition.direction = 'right'
@@ -842,6 +874,7 @@ class Creator():
         Remindervar.ids.back_button.unbind(on_release = Creator.back_op)
         self.saving.ids.save_button.unbind(on_release = Creator.save)
         self.saving.ids.cancel_button.unbind(on_release = Creator.back_op)
+        swiping = False
 
 class AlarmDateTimeHandler():
 
@@ -851,23 +884,21 @@ class AlarmDateTimeHandler():
             if mode == 0: #Just creating a new reminder no need to clear previous alarms
                 ReminderScheduler.schedule(alarm_id, self.heading.ids.heading.text, self.description.ids.description.text, alarm_date, time)
             else: #Old reminder is being edited so we have to clear older data and run new data
-                if not eval(self.reminder_data[2])[0]:
+                if not eval(self.reminder_data[2]): #There is an empty list so we just continue to only add the new rings to the alarm manager
                     ReminderScheduler.schedule(alarm_id, self.heading.ids.heading.text, self.description.ids.description.text, alarm_date, time)
                 elif eval(self.reminder_data[2])[0].isalpha():
-                    self.remove_all(alarm_id, False)
+                    AlarmDateTimeHandler.remove_all(self,alarm_id, False)
                 else:
-                    self.remove_all(alarm_id,False)
+                    AlarmDateTimeHandler.remove_all(self,alarm_id,False)
             alarm_id+=1
             alarm_id+1
         pass
 
     def remove_all(self, id, repeating):
         if repeating:
-            ReminderScheduler.deschedule_repeating(delete_id)
-            delete_id+1
+            ReminderScheduler.deschedule_repeating(id)
         else:
-            ReminderScheduler.deschedule(delete_id)
-            delete_id+1
+            ReminderScheduler.deschedule(id)
 
     def days_handler(self,days, time,id, mode):
         alarm_id = id
@@ -891,14 +922,13 @@ class AlarmDateTimeHandler():
                 ReminderScheduler.schedule_repeating(alarm_id, self.heading.ids.heading.text, self.description.ids.description.text, day_number,time)
 
             else:
-                if not eval(self.reminder_data[2])[0]:
+                if not eval(self.reminder_data[2]): #There is an empty list so we just continue to only add the new rings to the alarm manager
                     ReminderScheduler.schedule_repeating(alarm_id, self.heading.ids.heading.text, self.description.ids.description.text, day_number, time)
                 elif eval(self.reminder_data[2])[0].isalpha():
-                    self.remove_all(alarm_id, True)
+                    AlarmDateTimeHandler.remove_all(self,alarm_id, True)
                 else:
-                    self.deschedule(alarm_id, True)
+                    AlarmDateTimeHandler.remove_all(self,alarm_id, False)
             alarm_id+=1
-
 
 class AndroidHandler():
 
@@ -979,11 +1009,10 @@ swiping = False
 current_app_location = 'MainScreen'
 back_counter = 1
 sm = ScreenManagerMain(transition = CardTransition(direction = 'left'))
+
 class Mainapp(MDApp):
     def build(self):
         Builder.load_file("reminder.kv")
-        self.data = {'New Reminder':'alarm',
-                'New List':'format-list-checkbox'}
         Window.bind(on_keyboard=self.on_key)
         sm.add_widget(MainScreen(name = 'MainScreen'))
         sm.add_widget(ReminderScreen(name = 'ReminderScreen'))
@@ -1010,11 +1039,11 @@ class Mainapp(MDApp):
 
 
 
-    def plus_button_callback(self, instance):
-        if instance.icon == 'alarm':
-            Creator.screen_switcher(self,)
-        elif instance.icon == 'format-list-checkbox':
+    def plus_button_callback(self):
+        if current_app_location == 'MainScreen':
             MainViewHandler.slider(self, 1, None)
+        else:
+            Creator.screen_switcher(self,)
 
     def on_key(self, window, key, scancode, codepoint, modifier):
         if key == 27:  # the esc key

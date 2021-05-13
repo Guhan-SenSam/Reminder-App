@@ -45,7 +45,7 @@ class GestureBox(BoxLayout):
             #normalize so thwu willtolerate size variations
             gesture.normalize()
             #minscore to be attained for a match to be true
-            match = gestures.find(gesture, minscore=0.7)
+            match = gestures.find(gesture, minscore=0.5)
             if match:
                 print("{} happened".format(match[1].name))
                 self.dispatch('on_{}'.format(match[1].name))

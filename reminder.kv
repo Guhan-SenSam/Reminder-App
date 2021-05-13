@@ -1,5 +1,6 @@
 #:import wd kivy.core.window.Window
 #:import CardTransition kivy.uix.screenmanager.CardTransition
+#: import screendpi kivy.metrics.MetricsBase
 
 <ScreenManagerMain>:
     transiton:CardTransition()
@@ -65,14 +66,13 @@
             size_hint:.85,.70
             pos_hint:{'center_x':.5, "center_y":.5}
 
-    MDFloatingActionButtonSpeedDial:
+    MDFloatingActionButton:
         id:action_button
-        data:app.data
         icon: "plus"
-        callback: app.plus_button_callback
+        on_release: app.plus_button_callback()
         root_button_anim: True
-        md_bg_color: 218/255,68/255,83/255, 1
-
+        md_bg_color:218/255,68/255,83/255,1
+        pos_hint:{'center_x':.85, 'center_y':.08}
 
 
 <ReminderScreen>:
@@ -161,7 +161,7 @@
     elevation:10
     size_hint:1, None
     orientation:'vertical'
-    padding:50,50,50,50
+    padding:dp(50),dp(50),dp(50),dp(50)
 
     BoxLayout:
         id:holder
@@ -182,7 +182,7 @@
             id:time_picker
             text: 'Time'
             font_size:'22sp'
-            icon:'clock'
+            icon:'alarm'
             size_hint:None,None
             width:root.width/1.5
             pos_hint:{'center_x':.5, 'center_y':.5}
@@ -191,42 +191,39 @@
             text_color:218/255,68/255,83/255,1
             md_bg_color:50/255,49/255,61/255,1
 
-        GridLayout:
-            height:self.minimum_height
-            cols:3
-            spacing:'10dp'
-            size_hint_y:None
+        Label:
+            id:label2
+            text:'On These:'
+            size: self.texture_size
+            size_hint:None,None
+            font_name:'Roboto-Black.ttf'
+            font_size:sp(22)
 
-            Label:
-                id:label2
-                text:'On These:'
-                size: self.texture_size
-                size_hint:None,None
-                font_name:'Roboto-Black.ttf'
-                font_size:'25sp'
-                valign:'top'
-            MDChipContainer:
-                type:'choice'
-                id:type
-                spacing:dp(5)
-                MDChip:
-                    id:days
-                    text: 'Days'
-                    icon: 'calendar'
-                    selected_chip_color:218/255,68/255,83/255,1
-                    color:50/255,49/255,61/255,1
-                MDChip:
-                    id:dates
-                    text: 'Dates'
-                    icon: 'face'
-                    selected_chip_color:218/255,68/255,83/255,1
-                    color:50/255,49/255,61/255,1
-                MDChip:
-                    id:none
-                    text:'None'
-                    icon:'close'
-                    selected_chip_color:218/255,68/255,83/255,1
-                    color:50/255,49/255,61/255,1
+        MDChipContainer:
+            type:'choice'
+            id:type
+            spacing:dp(5)
+            height:self.minimum_height
+            size_hint:None,None
+
+            MDChip:
+                id:days
+                text: 'Days'
+                icon: 'calendar-range'
+                selected_chip_color:218/255,68/255,83/255,1
+                color:50/255,49/255,61/255,1
+            MDChip:
+                id:dates
+                text: 'Dates'
+                icon: 'calendar'
+                selected_chip_color:218/255,68/255,83/255,1
+                color:50/255,49/255,61/255,1
+            MDChip:
+                id:none
+                text:'None'
+                icon:'close-circle-outline'
+                selected_chip_color:218/255,68/255,83/255,1
+                color:50/255,49/255,61/255,1
         MDChipContainer:
             id:days_container
             type:'choice'
@@ -246,7 +243,7 @@
         id:date_picker
         text: 'Date'
         font_size:'22sp'
-        icon:'calendar'
+        icon:'calendar-plus'
         icon_color:218/255,68/255,83/255,1
         line_color:218/255,68/255,83/255,1
         text_color:218/255,68/255,83/255,1
@@ -387,7 +384,7 @@
 
         MDIconButton:
             id:delete_button
-            icon:'delete'
+            icon:'trash-can-outline'
             pos_hint:{"center_x":.9, "center_y":.5}
 
 

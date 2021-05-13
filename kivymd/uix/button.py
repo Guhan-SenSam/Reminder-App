@@ -772,13 +772,11 @@ Builder.load_string(
     padding: "8dp", "4dp", "8dp", "4dp"
     height: label.texture_size[1] + self.padding[1] * 2
     width: label.texture_size[0] + self.padding[0] * 2
-    elevation: 10
 
     canvas:
         Color:
             rgba:
-                self.theme_cls.primary_color \
-                if not root.bg_color else root.bg_color
+                0,0,0,0
         RoundedRectangle:
             pos: self.pos
             size: self.size
@@ -790,7 +788,7 @@ Builder.load_string(
         text: root.text
         size_hint: None, None
         size: self.texture_size
-        color: root.theme_cls.text_color if not root.text_color else root.text_color
+        color:1,1,1,1
 """
 )
 
