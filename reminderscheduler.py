@@ -87,7 +87,6 @@ class ReminderScheduler():
         calender.set(Calendar.MILLISECOND, 0)
 
         #We have to reset the alarm every time it rings as there is no other way to set an exact repeating alarm
-        print(calender.getTimeInMillis())
         cast(AlarmManager, context.getSystemService(Context.ALARM_SERVICE)).setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,calender.getTimeInMillis(), newdaypending)
 
     def deschedule_repeating(id):

@@ -46,7 +46,7 @@ requirements = python3,kivy==2.0.0,kivymd,sqlite3,plyer,pillow, sdl2_ttf==2.0.15
 #garden_requirements =
 
 # (str) Presplash of the application
-#presplash.filename = %(source.dir)s/data/presplash.png
+presplash.filename = remindyicon.png
 
 # (str) Icon of the application
 icon.filename = remindyicon.png
@@ -82,7 +82,7 @@ fullscreen = 0
 # red, blue, green, black, white, gray, cyan, magenta, yellow, lightgray,
 # darkgray, grey, lightgrey, darkgrey, aqua, fuchsia, lime, maroon, navy,
 # olive, purple, silver, teal.
-android.presplash_color = darkgray
+android.presplash_color = black
 
 # (list) Permissions
 android.permissions = VIBRATE,WAKE_LOCK

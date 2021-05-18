@@ -181,7 +181,7 @@ class MainViewHandler():
                 list_reminder_element.completed = True
                 list_reminder_element.ids.text.strikethrough = True
             self.list_content.ids.reminder_container.add_widget(list_reminder_element)
-            swiping = False
+        swiping = False
 
         anim1 = Animation(opacity = 1, duration = .5)
         anim1.start(self.list_content.ids.reminder_container)
@@ -662,11 +662,13 @@ class Creator():
                 all_lists.append(a[0])
         all_lists.sort()
         all_lists.insert(1, new_name)
+        swiping = False
         MainViewHandler.slider(self, 0, None)
 
     def cancel_new_list(self, instance):
         Mainscreenvar = sm.get_screen("MainScreen")
         Mainscreenvar.ids.action_button.opacity = 1
+        swiping = False
         MainViewHandler.slider(self,0, None)
 
     def screen_switcher(self):
@@ -892,7 +894,7 @@ class AlarmDateTimeHandler():
         for alarm_day in days:
             if alarm_day == 'Monday':
                 day_number = 1
-            elif alarm_day == 'Tueday':
+            elif alarm_day == 'Tuesday':
                 day_number = 2
             elif alarm_day == 'Wednesday':
                 day_number = 3
