@@ -208,14 +208,15 @@ class MainViewHandler():
 class OpenListView():
 
     def list_view_loader_transition(self, op,caller):
-        global current_list
+        global current_list, current_app_location
         current_list = all_lists[0]
         Mainscreenvar = sm.get_screen("MainScreen")
+        current_app_location = 'IndividualListView'
         if op == 1:
             anim1 = Animation(size_hint = (1,1), radius=(0,0,0,0), duration = .5, t = 'in_out_circ')
             anim2 = Animation(pos_hint = {'center_x':.5, 'center_y':-2}, duration = .7, t = 'in_out_circ')
             anim3 = Animation(pos_hint = {'center_x':.5, 'center_y':-2}, duration = .9, t = 'in_out_circ')
-            anim3.bind(on_complete = partial(OpenListView.list_view_loader, self))
+            anim1.bind(on_complete = partial(OpenListView.list_view_loader, self))
             anim1.start(Mainscreenvar.children[1].children[0])
             anim2.start(Mainscreenvar.children[2].children[0])
             anim3.start(Mainscreenvar.children[3].children[0])
@@ -231,7 +232,7 @@ class OpenListView():
             Clock.schedule_once(partial(OpenListView.list_view_loader,self,None),0)
 
     def list_view_loader(self,anim_object,caller):
-        global swiping, current_app_location
+        global swiping
         Mainscreenvar = sm.get_screen("MainScreen")
         name = 'ele{}'.format(counter)
         self.list_view_banner = ListViewBanner()
@@ -241,7 +242,7 @@ class OpenListView():
         Mainscreenvar.ids[name].children[0].add_widget(self.list_view_banner)
         Mainscreenvar.ids[name].children[0].add_widget(self.list_view_element)
         swiping = True
-        current_app_location = 'IndividualListView'
+
 
     def sort_by_creation(self):
         connection = sqlite3.connect('reminder.db')
@@ -893,19 +894,19 @@ class AlarmDateTimeHandler():
         #Now we convert the days into number values
         for alarm_day in days:
             if alarm_day == 'Monday':
-                day_number = 1
-            elif alarm_day == 'Tuesday':
                 day_number = 2
-            elif alarm_day == 'Wednesday':
+            elif alarm_day == 'Tuesday':
                 day_number = 3
-            elif alarm_day == 'Thursday':
+            elif alarm_day == 'Wednesday':
                 day_number = 4
-            elif alarm_day == 'Friday':
+            elif alarm_day == 'Thursday':
                 day_number = 5
-            elif alarm_day == 'Saturday':
+            elif alarm_day == 'Friday':
                 day_number = 6
-            else:
+            elif alarm_day == 'Saturday':
                 day_number = 7
+            else:
+                day_number = 1
             if mode ==0:
                 ReminderScheduler.schedule_repeating(alarm_id, self.heading.ids.heading.text, self.description.ids.description.text, day_number,time)
 

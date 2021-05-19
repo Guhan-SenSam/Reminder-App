@@ -78,14 +78,15 @@ class ReminderScheduler():
         time = datetime.strptime(time_to_ring,"%I:%M %p").strftime("%H:%M")
 
         calender= Calendar.getInstance()
-        calender.set(Calendar.DAY_OF_WEEK, day_to_ring+1)
-        if Calendar.getInstance().getTimeInMillis() > calender.getTimeInMillis():
-            calender.add(Calendar.DATE, 7)
+        calender.set(Calendar.DAY_OF_WEEK, day_to_ring)
         calender.set(Calendar.HOUR_OF_DAY, int(time[0:2]))
         calender.set(Calendar.MINUTE, int(time[3:]))
         calender.set(Calendar.SECOND, 0)
         calender.set(Calendar.MILLISECOND, 0)
-
+        if Calendar.getInstance().getTimeInMillis() > calender.getTimeInMillis():
+            print('ran')
+            calender.add(Calendar.DATE, 7)
+        print(calender.getTimeInMillis())
         #We have to reset the alarm every time it rings as there is no other way to set an exact repeating alarm
         cast(AlarmManager, context.getSystemService(Context.ALARM_SERVICE)).setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,calender.getTimeInMillis(), newdaypending)
 
