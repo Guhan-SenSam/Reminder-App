@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.Context;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.os.Build;
@@ -13,17 +15,14 @@ import org.kivy.android.PythonActivity;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.media.AudioAttributes;
-import org.remindy.remindy.R.drawable;
+import org.remindy.remindy.R;
+import java.lang.Math;
 
 public class ReminderAlarmReceiver extends BroadcastReceiver{
 
-         public static String TITLE = "notification-id";
-         public static String DESCRIPTION = "notification";
+    private void createNotificationChannel(Context context) {
 
-        private void createNotificationChannel(Context context, Intent intent) {
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             Uri sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
             AudioAttributes att = new AudioAttributes.Builder()
@@ -31,39 +30,48 @@ public class ReminderAlarmReceiver extends BroadcastReceiver{
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build();
 
-            CharSequence name = "CAR_LOCATOR_ALARM";
-            String description = "Parking alarm";
+            CharSequence name = "New Reminder";
+            String description = "New Reminder";
             int importance = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel channel = new NotificationChannel("CAR_LOCATOR_ALARM", name, importance);
+            NotificationChannel channel = new NotificationChannel("REMINDY", name, importance);
             channel.setDescription(description);
             channel.setSound(sound, att);
             channel.enableLights(true);
             channel.enableVibration(true);
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
-
-            Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-
-
-            String contentTitle = intent.getExtras().getString("TITLE");
-            String contentDescription =intent.getExtras().getString("DESCRIPTION");
-
-            Notification n = new Notification.Builder(context, "CAR_LOCATOR_ALARM")
-                    .setSmallIcon(drawable.icon)
-                    .setContentTitle(contentTitle)
-                    .setContentText(contentDescription)
-                    .setTicker(contentDescription)
-                    .setVibrate(new long[]{0, 300, 0, 400, 0, 500})
-                    .setSound(uri)
-                    .setAutoCancel(true)
-                    .setOnlyAlertOnce(true).build();
-            notificationManager.notify(0,n);
         }
     }
+
+    private void sendNotification(Context context, Intent intent) {
+        Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        Intent newintent = new Intent(context, PythonActivity.class);
+        Short id = intent.getShortExtra("IDENTIFICATION", (short) 0);
+        newintent.putExtra("LAUNCH_APP_WITH_REMINDER", id);
+        PendingIntent pendingintent = PendingIntent.getActivity(context,id, newintent, PendingIntent.FLAG_ONE_SHOT);
+
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "REMINDY")
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle(intent.getExtras().getString("TITLE"))
+                .setContentText(intent.getExtras().getString("DESCRIPTION"))
+                .setTicker("New Reminder")
+                .setVibrate(new long[]{0, 300, 0, 400, 0, 500})
+                .setSound(uri)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(false)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingintent);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        notificationManager.notify((int)(Math.random()*(8000-1+1)+1), builder.build());
+    }
+
 
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        this.createNotificationChannel(context, intent);
+        this.createNotificationChannel(context);
+        this.sendNotification(context, intent);
     }
 }

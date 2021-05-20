@@ -35,13 +35,13 @@ class ReminderScheduler():
     #To update a reminder just overwrite existing reminder
 
     def schedule(id,title,description, date_to_ring,time_to_ring):
-
         #Create Intent and add required properties to it
         newdate = Intent()
         newdate.setClass(context, ReminderAlarmReceiver)
         newdate.setAction('org.org.remindy.ACTION_START_REMINDER')
         newdate.putExtra("TITLE", String(title))
         newdate.putExtra("DESCRIPTION", String(description))
+        newdate.putExtra("IDENTIFICATION", id)
         newdatepending = PendingIntent.getBroadcast(context,id,newdate,  PendingIntent.FLAG_CANCEL_CURRENT)
 
         #Create datetime string in python in the format for date object of java

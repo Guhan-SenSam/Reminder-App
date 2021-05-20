@@ -113,19 +113,27 @@
     size_hint:1, None
     orientation:'vertical'
     padding:50,0,50,0
-
+    Label:
+        id:label
+        text:'Title'
+        size: self.texture_size
+        size_hint:None,None
+        font_name:'Roboto-Black.ttf'
+        font_size:'25sp'
     MDTextField:
         id:heading
-        text:
         pos_hint:{'center_x':.5, "center_y":.5}
         size_hint:1,None
-        on_size:root.height = self.height
+        on_size:root.height = self.height + root.ids.label.height + dp(20)
         font_name:'Roboto-Black.ttf'
-        font_size:'30sp'
+        font_size:'23sp'
         multiline:True
         color_mode: 'custom'
         line_color_focus: 1,1,1,1
         current_hint_text_color:1,1,1,1
+
+
+
 
 <ReminderDescriptionBlueprint>:
     radius:40,40,40,40
@@ -463,7 +471,6 @@
         padding:("15dp", "20dp")
         font_name:"Roboto-Black.ttf"
         font_size:'30sp'
-
     MDTextField:
         hint_text: 'Enter a new list name'
         pos_hint:{ "center_y":.6, 'center_x':.5}
@@ -473,10 +480,9 @@
         current_hint_text_color:1,1,1,1
         font_name:'Roboto-Black.ttf'
         font_size:'25sp'
-
     MDRaisedButton:
         id:confirm_button
-        pos_hint:{'center_x':.25, "center_y":.3}
+        pos_hint:{'center_x':.75, "center_y":.3}
         size_hint:.2,.08
         md_bg_color: 218/255,68/255,83/255, 1
         text:"Confirm"
@@ -484,7 +490,7 @@
         font:"Roboto-Regular.ttf"
     MDRaisedButton:
         id:cancel_button
-        pos_hint:{'center_x':.75, "center_y":.3}
+        pos_hint:{'center_x':.25, "center_y":.3}
         size_hint:.2,.08
         md_bg_color: 218/255,68/255,83/255, 1
         text:"Cancel"
