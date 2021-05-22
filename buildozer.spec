@@ -154,7 +154,7 @@ android.api = 30
 # their classes. Don't add jars that you do not need, since extra jars can slow
 # down the build process. Allows wildcards matching, for example:
 # OUYA-ODK/libs/*.jar
-#android.add_jars = foo.jar,bar.jar,path/to/more/*.jar
+#android.add_jars = jdbc-api-1.4.jar
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
@@ -226,7 +226,7 @@ android.enable_androidx = True
 #android.uses_library =
 
 # (str) Android logcat filters to use
-android.logcat_filters = *:S python:D
+#android.logcat_filters = *:S python:D
 
 # (bool) Android logcat only display log for activity's pid
 #android.logcat_pid_only = False

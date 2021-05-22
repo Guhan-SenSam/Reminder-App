@@ -34,14 +34,20 @@ Date = autoclass('java.util.Date')
 class ReminderScheduler():
     #To update a reminder just overwrite existing reminder
 
-    def schedule(id,title,description, date_to_ring,time_to_ring):
+    def schedule(id,title,description, date_to_ring,time_to_ring, current_list):
         #Create Intent and add required properties to it
+        import os
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        print("#"*20)
+        print(dir_path)
+        print("#"*20)
         newdate = Intent()
         newdate.setClass(context, ReminderAlarmReceiver)
         newdate.setAction('org.org.remindy.ACTION_START_REMINDER')
         newdate.putExtra("TITLE", String(title))
         newdate.putExtra("DESCRIPTION", String(description))
         newdate.putExtra("IDENTIFICATION", id)
+        newdate.putExtra("CURRENT_LIST", String(current_list))
         newdatepending = PendingIntent.getBroadcast(context,id,newdate,  PendingIntent.FLAG_CANCEL_CURRENT)
 
         #Create datetime string in python in the format for date object of java
@@ -64,7 +70,7 @@ class ReminderScheduler():
         newdatepending = PendingIntent.getBroadcast(context,id,deletedate,  PendingIntent.FLAG_CANCEL_CURRENT)
         cast(AlarmManager, context.getSystemService(Context.ALARM_SERVICE)).cancel(newdatepending)
 
-    def schedule_repeating(id,title,description,day_to_ring, time_to_ring):
+    def schedule_repeating(id,title,description,day_to_ring, time_to_ring, current_list):
 
         #Create Intent and add required properties to it
         newday = Intent()
@@ -73,6 +79,7 @@ class ReminderScheduler():
         newday.putExtra("TITLE", String(title))
         newday.putExtra("DESCRIPTION", String(description))
         newday.putExtra("IDENTIFICATION", id)
+        newday.putExtra("CURRENT_LIST", String(current_list))
         newdaypending = PendingIntent.getBroadcast(context,id,newday,  PendingIntent.FLAG_CANCEL_CURRENT)
 
         time = datetime.strptime(time_to_ring,"%I:%M %p").strftime("%H:%M")
@@ -86,7 +93,6 @@ class ReminderScheduler():
         if Calendar.getInstance().getTimeInMillis() > calender.getTimeInMillis():
             print('ran')
             calender.add(Calendar.DATE, 7)
-        print(calender.getTimeInMillis())
         #We have to reset the alarm every time it rings as there is no other way to set an exact repeating alarm
         cast(AlarmManager, context.getSystemService(Context.ALARM_SERVICE)).setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,calender.getTimeInMillis(), newdaypending)
 

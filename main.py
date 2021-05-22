@@ -37,9 +37,11 @@ import random
 if platform == 'android':
     from reminderscheduler import ReminderScheduler
     from android import activity
+    from jnius import autoclass, cast, JavaException
+    PythonActivity = autoclass('org.kivy.android.PythonActivity')
+    mActivity = PythonActivity.mActivity
 
 connection = sqlite3.connect('reminder.db')
-
 mycursor = connection.cursor()
 
 class MainViewHandler():
@@ -50,7 +52,7 @@ class MainViewHandler():
         data = mycursor.fetchall()
         all_lists = []
         for a in data:
-            if a[0] == 'sqlite_sequence':
+            if a[0] == 'sqlite_sequence' or a[0] == 'android_metadata':
                 pass
             else:
                 all_lists.append(a[0])

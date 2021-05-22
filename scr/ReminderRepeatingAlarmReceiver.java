@@ -48,7 +48,9 @@ public class ReminderRepeatingAlarmReceiver extends BroadcastReceiver{
                 Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
                 Intent newintent = new Intent(context, PythonActivity.class);
                 Short id = intent.getShortExtra("IDENTIFICATION", (short) 0);
+                String current_list = intent.getStringExtra("CURRENT_LIST");
                 newintent.putExtra("LAUNCH_APP_WITH_REMINDER", id);
+                newintent.putExtra("CURRENT_LIST",current_list);
                 PendingIntent pendingintent = PendingIntent.getActivity(context,id, newintent, PendingIntent.FLAG_ONE_SHOT);
 
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "REMINDY")
