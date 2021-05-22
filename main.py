@@ -91,25 +91,26 @@ class MainViewHandler():
         global counter
         Mainscreenvar = sm.get_screen("MainScreen")
         card_to_drop = "ele{}".format(counter)
-        try:
+        if operation == 1 and not all_lists:
             Mainscreenvar.remove_widget(MainViewHandler.label1)
             Mainscreenvar.remove_widget(MainViewHandler.label2)
-        except:
-            pass
+            Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
         if operation == 1 and not all_lists:
             Mainapp.swiping = False
+            Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
             MainViewHandler.swapper(self,operation,None,None)
         else:
-            if Mainapp.swiping == False:
+            if Mainapp.swiping == False and all_lists:
                 Mainapp.swiping = True
                 anim1 = Animation(pos_hint = {'center_x':.5, "center_y":-1}, duration = .3, t= 'in_out_circ')
                 anim1.start(Mainscreenvar.ids[card_to_drop].children[0])
                 anim1.bind(on_complete = partial(MainViewHandler.swapper,self, operation))
+                Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
         try:
             plyer.vibrator.vibrate(0.02)
         except:
             pass
-        Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
+
 
     def swapper(self,operation,anim,caller):
         global counter, all_lists
@@ -226,7 +227,7 @@ class MainViewHandler():
                                                             )
         Mainscreenvar.add_widget(MainViewHandler.label1)
         Mainscreenvar.add_widget(MainViewHandler.label2)
-
+        MainViewHandler.swiping = True
 
 class OpenListView():
 
@@ -628,6 +629,7 @@ class IndividualReminderView():
 class Creator():
     def create_new_list_load_ui(self):
         Mainscreenvar = sm.get_screen("MainScreen")
+        Mainapp.swiping = True
         Mainscreenvar.ids.action_button.opacity = 0
         anim1 = Animation(pos_hint = {'center_x':.85, 'center_y':.08}, duration = .3, t = 'in_out_circ')
         anim1.start(Mainscreenvar.ids.action_button)
@@ -636,7 +638,7 @@ class Creator():
         newlist.ids.cancel_button.bind(on_press = partial(Creator.cancel_new_list, self))
         current_card = 'ele' + str(counter)
         Mainscreenvar.ids[current_card].children[0].add_widget(newlist)
-        Mainapp.swiping = True
+
 
     def create_new_list(self, caller):
         Mainscreenvar = sm.get_screen("MainScreen")
