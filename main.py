@@ -110,7 +110,6 @@ class MainViewHandler():
                 except:
                     pass
 
-
     def swapper(self,operation,anim,caller):
         global counter, all_lists
         Mainscreenvar = sm.get_screen("MainScreen")
@@ -217,21 +216,24 @@ class MainViewHandler():
         card_to_drop = "ele{}".format(counter)
         Mainscreenvar = sm.get_screen("MainScreen")
         Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
-        anim1 = Animation(pos_hint = {'center_y':-1}, opacity = 0, duration = .5)
+        anim1 = Animation(pos_hint = {'center_x':-1}, duration = .6)
         anim1.start(Mainscreenvar.ids.ele1.children[0])
         anim1.start(Mainscreenvar.ids.ele2.children[0])
         anim1.start(Mainscreenvar.ids.ele3.children[0])
         Animation(pos_hint = {'center_x':.5, 'center_y':.40}, duration = .5, t = 'in_out_circ').start(Mainscreenvar.ids.action_button)
         MainViewHandler.label1 = MDLabel(text = 'Looks like you have no lists', pos_hint = {'center_x':.5,'center_y':.55},
                                                             font_style = 'H5',font_name = 'Roboto-Medium.ttf', halign = 'center',  theme_text_color = 'Custom',
-                                                            text_color = (1,1,1,1)
+                                                            text_color = (1,1,1,1),opacity = 0
                                                             )
         MainViewHandler.label2 = MDLabel(text = 'Create a new one here', pos_hint = {'center_x':.5,'center_y':.50},
                                                             font_style = 'H6',font_name = 'Roboto-Medium.ttf', halign = 'center',theme_text_color = 'Custom',
-                                                            text_color = (1,1,1,.75)
+                                                            text_color = (1,1,1,.75), opacity = 0
                                                             )
         Mainscreenvar.add_widget(MainViewHandler.label1)
         Mainscreenvar.add_widget(MainViewHandler.label2)
+        anim2 = Animation(opacity = 1, duration = .6)
+        anim2.start(MainViewHandler.label1)
+        anim2.start(MainViewHandler.label2)
         MainViewHandler.swiping = True
 
 class OpenListView():
@@ -555,10 +557,9 @@ class IndividualReminderView():
         instance.parent.parent.remove_widget(instance.parent)
 
     def save_reminder(self,caller):
-        print(self.current_reminder)
         mycursor.execute("DELETE FROM {} WHERE creation_order = {}".format(current_list, self.current_reminder))
         if self.description.ids.description.text == '' or self.description.ids.description.text.isspace():
-            insert_command = 'INSERT INTO {} (title,description,date, time,rem_id,color, state) VALUES("{}"," ","{}","{}", {},0, 0)'.format(
+            insert_command = 'INSERT INTO {} (title,description,date, time,rem_id,color, state) VALUES("{}","","{}","{}", {},0, 0)'.format(
                                 current_list, self.heading.ids.heading.text,
                                 self.new_timings,
                                 self.timing.ids.time_picker.text,
@@ -584,8 +585,12 @@ class IndividualReminderView():
         else:
             AlarmDateTimeHandler.dates_handler(self,self.new_timings,self.timing.ids.time_picker.text, self.reminder_data[-1], 1)
 
-        OpenListView.view_updater(self)
-        IndividualReminderView.back_op(self, None)
+        if app_current_location != 'MainScreen':
+            OpenListView.view_updater(self)
+            IndividualReminderView.back_op(self, None)
+        else:
+            IndividualReminderView.back_op(self, None)
+            Mainapp.swiping = False
 
     def changes_checker(*args):
         self = MDApp.get_running_app()
@@ -734,7 +739,7 @@ class Creator():
     def load_description(self, instance):
         Remindervar = sm.get_screen('ReminderScreen')
         self.description.opacity = 0
-        self.description.ids.description.text = ' '
+        self.description.ids.description.text = ''
         Remindervar.ids.container.add_widget(self.description)
         anim2 = Animation(opacity = 1, duration = .2)
         anim2.start(self.description)
@@ -865,7 +870,7 @@ class Creator():
                 new_dates.append(dates.ids.date_picker.text)
         else:
             new_dates = []
-        description = ' ' if self.description.ids.description.text == '' else self.description.ids.description.text
+        description = self.description.ids.description.text
         mycursor.execute( 'INSERT INTO {} (title,description,date, time, rem_id,color, state) VALUES("{}","{}","{}","{}", {},0,0)'.format(
                 current_list,
                 self.heading.ids.heading.text,
@@ -980,9 +985,10 @@ class AndroidHandler():
 class NotificationHandler():
 
     def open_reminder(self,list,id):
-        global current_list
+        global current_list, current_app_location
         Mainapp.swiping = True
         current_list = list
+        current_app_location = 'MainScreen'
         sm.current = 'ReminderScreen'
         IndividualReminderView.heading_loader(self,id,1,None)
 
@@ -1113,7 +1119,6 @@ class Mainapp(MDApp):
 
     def checker(self, instance):
         OpenListView.reminder_complete_handler(self,instance)
-
 
 if platform != 'android':
     Window.size = (360,640)
