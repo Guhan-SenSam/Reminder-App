@@ -14,21 +14,22 @@ public class ReminderSnooze extends BroadcastReceiver{
     @Override
     public void onReceive(Context context, Intent intent) {
 
-      System.out.println("Snoozed for 10 minutes");
       Intent snoozedrem = new Intent(context,ReminderAlarmReceiver.class);
       snoozedrem.putExtra("TITLE", intent.getExtras().getString("TITLE"));
       snoozedrem.putExtra("DESCRIPTION", intent.getExtras().getString("DESCRIPTION"));
       snoozedrem.putExtra("IDENTIFICATION", intent.getExtras().getShort("IDENTIFICATION"));
-      PendingIntent pendingsnoozedrem = PendingIntent.getBroadcast(context, intent.getExtras().getShort("IDENTIFICATION"), snoozedrem, PendingIntent.FLAG_CANCEL_CURRENT);
+      snoozedrem.putExtra("CURRENT_LIST", intent.getExtras().getString("CURRENT_LIST"));
+      snoozedrem.putExtra("INTENT_ID", intent.getExtras().getShort("INTENT_ID"));
+      PendingIntent pendingsnoozedrem = PendingIntent.getBroadcast(context, intent.getExtras().getShort("INTENT_ID"), snoozedrem, PendingIntent.FLAG_CANCEL_CURRENT);
       Calendar calendar = Calendar.getInstance();
-      Long timetoring = calendar.getTimeInMillis() + 10*60*60*1000;
+      Long timetoring = calendar.getTimeInMillis() + 5*1000;
       AlarmManager alarmManager=(AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
       alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,timetoring, pendingsnoozedrem);
 
       //Now clear the notification from the bar
 
       NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-      notificationManager.cancel(intent.getExtras().getInt("NOTIFIACTION_ID"));
+      notificationManager.cancel(intent.getExtras().getInt("NOTIFICATION_ID"));
 
       //Give a toast to the user
       Toast toast = Toast.makeText(context, "Snoozed for 10 mins", Toast.LENGTH_SHORT);

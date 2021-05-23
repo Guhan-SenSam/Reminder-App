@@ -24,7 +24,7 @@ public class ReminderMarkComp extends BroadcastReceiver{
     db.endTransaction();
     //Now remove the notification from panel
     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-    notificationManager.cancel(intent.getExtras().getInt("NOTIFIACTION_ID"));
+    notificationManager.cancel(intent.getExtras().getInt("NOTIFICATION_ID"));
     //Show a toast to the user
     Toast toast = Toast.makeText(context, "Remider Marked Complete", Toast.LENGTH_SHORT);
     toast.show();

@@ -51,15 +51,15 @@ public class ReminderAlarmReceiver extends BroadcastReceiver{
         String current_list = intent.getStringExtra("CURRENT_LIST");
         newintent.putExtra("LAUNCH_APP_WITH_REMINDER", id);
         newintent.putExtra("CURRENT_LIST", current_list);
-        PendingIntent pendingintent = PendingIntent.getActivity(context,id, newintent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingintent = PendingIntent.getActivity(context,notification_id, newintent, PendingIntent.FLAG_ONE_SHOT);
 
         Intent mrkcomp = new Intent(context, ReminderMarkComp.class);
-        mrkcomp.putExtra("MARK_AS_COMP", id);
         mrkcomp.putExtra("CURRENT_LIST", current_list);
         mrkcomp.putExtra("IDENTIFICATION", intent.getExtras().getShort("IDENTIFICATION"));
-        mrkcomp.putExtra("NOTIFIACTION_ID", notification_id);
+        mrkcomp.putExtra("NOTIFICATION_ID", notification_id);
+        mrkcomp.putExtra("INTENT_ID", intent.getExtras().getShort("INTENT_ID"));
         mrkcomp.setAction("org.org.remindy.MRKCOMP");
-        PendingIntent pendingmrkcomp = PendingIntent.getBroadcast(context,id,mrkcomp, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingmrkcomp = PendingIntent.getBroadcast(context,notification_id,mrkcomp, PendingIntent.FLAG_ONE_SHOT);
         String title = "Mark As Complete";
         NotificationCompat.Action mrkcompaction = new NotificationCompat.Action.Builder( 0, title, pendingmrkcomp).build();
 
@@ -68,7 +68,9 @@ public class ReminderAlarmReceiver extends BroadcastReceiver{
         snooze.putExtra("DESCRIPTION", intent.getExtras().getString("DESCRIPTION"));
         snooze.putExtra("IDENTIFICATION", intent.getExtras().getShort("IDENTIFICATION"));
         snooze.putExtra("NOTIFICATION_ID", notification_id);
-        PendingIntent pendingsnooze = PendingIntent.getBroadcast(context, intent.getExtras().getShort("IDENTIFICATION"), snooze, PendingIntent.FLAG_CANCEL_CURRENT);
+        snooze.putExtra("INTENT_ID", intent.getExtras().getShort("INTENT_ID"));
+        snooze.putExtra("CURRENT_LIST", current_list);
+        PendingIntent pendingsnooze = PendingIntent.getBroadcast(context, notification_id, snooze, PendingIntent.FLAG_CANCEL_CURRENT);
         NotificationCompat.Action snoozeaction = new NotificationCompat.Action.Builder( 0, "Snooze for 10 mins", pendingsnooze).build();
 
 
