@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.Context;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.os.Build;
@@ -16,61 +18,96 @@ import android.media.AudioAttributes;
 import org.remindy.remindy.R.drawable;
 import java.util.Calendar;
 import android.app.AlarmManager;
+import java.lang.Math;
 
 public class ReminderRepeatingAlarmReceiver extends BroadcastReceiver{
 
-        private void createNotificationChannel(Context context, Intent intent) {
+            private void createNotificationChannel(Context context) {
 
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    Uri sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Uri sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                    AudioAttributes att = new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build();
 
-            AudioAttributes att = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build();
+                    CharSequence name = "New Reminder";
+                    String description = "New Reminder";
+                    int importance = NotificationManager.IMPORTANCE_HIGH;
+                    NotificationChannel channel = new NotificationChannel("REMINDY", name, importance);
+                    channel.setDescription(description);
+                    channel.setSound(sound, att);
+                    channel.enableLights(true);
+                    channel.enableVibration(true);
+                    NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+                    notificationManager.createNotificationChannel(channel);
+                }
+            }
 
-            CharSequence name = "CAR_LOCATOR_ALARM";
-            String description = "Parking alarm";
-            int importance = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel channel = new NotificationChannel("CAR_LOCATOR_ALARM", name, importance);
-            channel.setDescription(description);
-            channel.setSound(sound, att);
-            channel.enableLights(true);
-            channel.enableVibration(true);
-            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
+            private void sendNotification(Context context, Intent intent) {
+                Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                int notification_id = (int)(Math.random()*(8000-1+1)+1);
+                Intent newintent = new Intent(context, PythonActivity.class);
+                Short id = intent.getShortExtra("IDENTIFICATION", (short) 0);
+                String current_list = intent.getStringExtra("CURRENT_LIST");
+                newintent.putExtra("LAUNCH_APP_WITH_REMINDER", id);
+                newintent.putExtra("CURRENT_LIST",current_list);
+                PendingIntent pendingintent = PendingIntent.getActivity(context,notification_id, newintent, PendingIntent.FLAG_ONE_SHOT);
 
-            Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                Intent mrkcomp = new Intent(context, ReminderMarkComp.class);
+                mrkcomp.putExtra("CURRENT_LIST", current_list);
+                mrkcomp.putExtra("IDENTIFICATION", intent.getExtras().getShort("IDENTIFICATION"));
+                mrkcomp.putExtra("NOTIFICATION_ID", notification_id);
+                mrkcomp.putExtra("INTENT_ID", intent.getExtras().getShort("INTENT_ID"));
 
+                mrkcomp.setAction("org.org.remindy.MRKCOMP");
+                PendingIntent pendingmrkcomp = PendingIntent.getBroadcast(context,notification_id,mrkcomp, PendingIntent.FLAG_ONE_SHOT);
+                String title = "Mark As Complete";
+                NotificationCompat.Action mrkcompaction = new NotificationCompat.Action.Builder( 0, title, pendingmrkcomp).build();
 
-            String contentTitle = intent.getExtras().getString("TITLE");
-            String contentDescription =intent.getExtras().getString("DESCRIPTION");
+                Intent snooze = new Intent(context, ReminderSnooze.class);
+                snooze.putExtra("TITLE", intent.getExtras().getString("TITLE"));
+                snooze.putExtra("DESCRIPTION", intent.getExtras().getString("DESCRIPTION"));
+                snooze.putExtra("IDENTIFICATION", intent.getExtras().getShort("IDENTIFICATION"));
+                snooze.putExtra("NOTIFICATION_ID", notification_id);
+                snooze.putExtra("INTENT_ID", intent.getExtras().getShort("INTENT_ID"));
+                snooze.putExtra("CURRENT_LIST", current_list);
+                PendingIntent pendingsnooze = PendingIntent.getBroadcast(context, notification_id, snooze, PendingIntent.FLAG_CANCEL_CURRENT);
+                NotificationCompat.Action snoozeaction = new NotificationCompat.Action.Builder( 0, "Snooze for 10 mins", pendingsnooze).build();
 
-            Notification n = new Notification.Builder(context, "CAR_LOCATOR_ALARM")
-                    .setSmallIcon(drawable.icon)
-                    .setContentTitle(contentTitle)
-                    .setContentText(String.valueOf(contentDescription))
-                    .setTicker(String.valueOf(contentDescription))
-                    .setVibrate(new long[]{0, 300, 0, 400, 0, 500})
-                    .setSound(uri)
-                    .setAutoCancel(true)
-                    .setOnlyAlertOnce(true).build();
-            notificationManager.notify(0,n);
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "REMINDY")
+                        .setSmallIcon(drawable.icon)
+                        .setContentTitle(intent.getExtras().getString("TITLE"))
+                        .setContentText(intent.getExtras().getString("DESCRIPTION"))
+                        .setTicker("New Reminder")
+                        .setVibrate(new long[]{0, 300, 0, 400, 0, 500})
+                        .setSound(uri)
+                        .setAutoCancel(true)
+                        .setOnlyAlertOnce(false)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setContentIntent(pendingintent)
+                        .addAction(mrkcompaction)
+                        .addAction(snoozeaction);
 
-            // We then proceed to reschedule the alarm on the system level alarm manager
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+                notificationManager.notify(192837, builder.build());
 
-            PendingIntent newdaypending = PendingIntent.getBroadcast(context, intent.getExtras().getShort("IDENTIFICATION"), intent, PendingIntent.FLAG_CANCEL_CURRENT);
-            Calendar calendar = Calendar.getInstance();
-            Long timetoring = calendar.getTimeInMillis() + 7*24*60*60*1000;
-            AlarmManager alarmManager=(AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,timetoring, newdaypending);
-        }
-    }
+                    // We then proceed to reschedule the alarm on the system level alarm manager
+
+                    PendingIntent newdaypending = PendingIntent.getBroadcast(context, intent.getExtras().getShort("INTENT_ID"), intent, PendingIntent.FLAG_CANCEL_CURRENT);
+                    Calendar calendar = Calendar.getInstance();
+                    Long timetoring = calendar.getTimeInMillis() + 7*24*60*60*1000;
+                    AlarmManager alarmManager=(AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,timetoring, newdaypending);
+
+            }
+
 
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        this.createNotificationChannel(context, intent);
+        this.createNotificationChannel(context);
+        this.sendNotification(context, intent);
     }
 }
