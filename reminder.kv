@@ -12,59 +12,26 @@
         Rectangle:
             size:self.size
             pos:self.pos
-
-    RelativeLayout:
-        size:self.size
-        pos:self.pos
+    ListBlueprint:
         id:ele3
-        canvas.before:
-            PushMatrix
-            Rotate:
-                angle: 5
-                axis: 0,0,1
-                origin: root.center[0]-self.width/1.8, root.center[1]+self.height/2
-        canvas.after:
-            PopMatrix
-        ListBlueprint:
-            pos_hint:{'center_x':.42, "center_y":.5}
-            size_hint:.73,.70
-            md_bg_color:90/255,89/255,101/255,1
+        swipable:False
+        size_hint:None,None
+        md_bg_color:90/255,89/255,101/255,1
 
 
-    RelativeLayout:
-        size:self.size
-        pos:self.pos
+    ListBlueprint:
         id:ele2
-        canvas.before:
-            PushMatrix
-            Rotate:
-                angle: 3
-                axis: 0,0,1
-                origin: root.center[0]-self.width/1.8, root.center[1]+self.height/2
-        canvas.after:
-            PopMatrix
-        ListBlueprint:
-            pos_hint:{'center_x':.45, "center_y":.5}
-            size_hint:.78,.70
-            md_bg_color:70/255,69/255,81/255,1
+        swipable:False
+        size_hint:None,None
+        md_bg_color:70/255,69/255,81/255,1
+        elevation:13
 
-    RelativeLayout:
-        size:self.size
-        pos:self.pos
+    ListBlueprint:
         id:ele1
-        canvas.before:
-            PushMatrix
-            Rotate:
-                angle: 0
-                axis: 0,0,1
-                origin: root.center[0]-self.width/1.8, root.center[1]+self.height/2
-        canvas.after:
-            PopMatrix
-        ListBlueprint:
-            md_bg_color:50/255,49/255,61/255,1
-            elevation:13
-            size_hint:.85,.70
-            pos_hint:{'center_x':.5, "center_y":.5}
+        swipable:True
+        md_bg_color:50/255,49/255,61/255,1
+        elevation:13
+        size_hint:None,None
 
     MDFloatingActionButton:
         id:action_button
@@ -131,9 +98,6 @@
         color_mode: 'custom'
         line_color_focus: 1,1,1,1
         current_hint_text_color:1,1,1,1
-
-
-
 
 <ReminderDescriptionBlueprint>:
     radius:40,40,40,40
@@ -300,7 +264,7 @@
         id:heading
         text:'Reminder'
         size: self.texture_size
-        text_size:(self.parent.size[0]-self.parent.size[0]/3.5, self.parent.height)
+        text_size:(self.size[0]-self.size[0]/3.5, self.height)
         pos_hint:{ "center_y":.5}
         valign:'top'
         underline:True
@@ -356,10 +320,13 @@
         font_size:'20sp'
 
 <ListBlueprint>:
+    drag_rectangle: self.x, self.y, self.width, self.height
+    drag_timeout: 10000000 if self.swipable else 1
+    drag_distance: dp(10)
     orientation:'vertical'
     opacity:1
-    elevation:0
-    radius:60,60,60,60
+    elevation:15
+    radius:40,40,40,40
 
 <ListViewBanner>:
     elevation:10

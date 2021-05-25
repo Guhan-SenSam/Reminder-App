@@ -21,8 +21,11 @@ from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.animation import Animation
 from kivy.clock import Clock
+from kivy.uix.behaviors import DragBehavior
+from kivy.properties import BooleanProperty
+from kivy.metrics import dp
 
-import gesture_box as gesture
+
 from functools import partial
 import sqlite3
 import collections
@@ -48,7 +51,6 @@ class MainViewHandler():
 
     def all_lists_loader(self, mode):
         global all_lists
-        MainViewHandler.swiping = True
         mycursor.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
         data = mycursor.fetchall()
         all_lists = []
@@ -59,26 +61,56 @@ class MainViewHandler():
                 all_lists.append(a[0])
         all_lists.sort()
         if len(all_lists) == 0: #There are no lists so we show special screen
-            MainViewHandler.no_lists(self)
+            try:# No need to create the variables again if they exist
+                a = Mainscreenvar.ids.ele1.size
+                MainViewHandler.no_lists(self)
+            except:
+                MainViewHandler.card_setters(self)
+                MainViewHandler.no_lists(self)
         else:
             if mode==0:
+                MainViewHandler.card_setters(self)
                 MainViewHandler.first_list_loader(self)
+
+    def card_setters(self, *args):
+        Mainscreenvar = sm.get_screen("MainScreen")
+        #First get the three cards as objects and store in variables
+        last_card = Mainscreenvar.ids.ele3
+        middle_card = Mainscreenvar.ids.ele2
+        front_card = Mainscreenvar.ids.ele1
+        #Now set each cards size and then its position
+        Mainscreenvar.ids.ele3.size = Window.width - Window.width/5, Window.height - Window.height/3
+        Mainscreenvar.ids.ele3.pos = Window.center[0]-last_card.width/2, Window.center[1]-last_card.height/2 + dp(17.5)
+        Mainscreenvar.ids.ele2.size = Window.width - Window.width/5.5, Window.height - Window.height/3
+        Mainscreenvar.ids.ele2.pos = Window.center[0]-middle_card.width/2, Window.center[1]-middle_card.height/2 + dp(10)
+        Mainscreenvar.ids.ele1.size = Window.width - Window.width/6, Window.height - Window.height/3
+        Mainscreenvar.ids.ele1.pos = Window.center[0]-front_card.width/2, Window.center[1]-front_card.height/2
+
+        #Set some basic variables for sizes that can be used everywhere in the program
+        self.card1_pos = tuple(Mainscreenvar.ids.ele1.pos)
+        self.card2_pos = tuple(Mainscreenvar.ids.ele2.pos)
+        self.card3_pos = tuple(Mainscreenvar.ids.ele3.pos)
+        self.card1_size = tuple(Mainscreenvar.ids.ele1.size)
+        self.card2_size = tuple(Mainscreenvar.ids.ele2.size)
+        self.card3_size = tuple(Mainscreenvar.ids.ele3.size)
+
 
     def first_list_loader(self):
         Mainscreenvar = sm.get_screen("MainScreen")
+        #Load the first list content and display it
         self.list_content = ListContent()
         self.list_content.ids.heading.text = all_lists[0].replace("_"," ")
         self.list_content.ids.view_button.bind(on_press = partial(OpenListView.list_view_loader_transition, self,1))
-        Mainscreenvar.ids.ele1.children[0].add_widget(self.list_content)
+        Mainscreenvar.ids.ele1.add_widget(self.list_content)
         mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC LIMIT 6".format(all_lists[0]))
         data = mycursor.fetchall()
         for a in data:
             self.list_reminder_element = ListReminderElement()
-            if a[1].isspace():
-                text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]'
-            else:
+            if a[1]:
                 text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]' + '\n' + \
                 '[font=Roboto-Regular.ttf][size=16sp][color=#808080]' + a[1] + '[/color][/size][/font]'
+            else:
+                text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]'
             self.list_reminder_element.ids.text.text = text_to
             self.list_reminder_element.ids.check_box.bind(on_press = partial(MainViewHandler.reminder_complete_handler, self))
             self.list_reminder_element.name = a[4]
@@ -86,25 +118,21 @@ class MainViewHandler():
                 self.list_reminder_element.completed = True
                 self.list_reminder_element.ids.text.strikethrough = True
             self.list_content.ids.reminder_container.add_widget(self.list_reminder_element)
-        MainViewHandler.swiping = False
 
 
-    def slider(self,operation, ele):
+    def slider(self,operation, ele, *args):
+        self = Mainapp.get_running_app()
         global counter
         Mainscreenvar = sm.get_screen("MainScreen")
         card_to_drop = "ele{}".format(counter)
         if operation == 1 and not all_lists:
             Mainscreenvar.remove_widget(MainViewHandler.label1)
             Mainscreenvar.remove_widget(MainViewHandler.label2)
-            Mainapp.swiping = False
             MainViewHandler.swapper(self,operation,None,None)
         else:
-            if Mainapp.swiping == False and all_lists:
-                Mainapp.swiping = True
-                anim1 = Animation(pos_hint = {'center_x':.5, "center_y":-1}, duration = .3, t= 'in_out_circ')
-                anim1.start(Mainscreenvar.ids[card_to_drop].children[0])
-                anim1.bind(on_complete = partial(MainViewHandler.swapper,self, operation))
-                Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
+            if all_lists:
+                Mainscreenvar.ids[card_to_drop].clear_widgets()
+                MainViewHandler.swapper(self, operation, None,None)
                 try:
                     plyer.vibrator.vibrate(0.02)
                 except:
@@ -113,92 +141,167 @@ class MainViewHandler():
     def swapper(self,operation,anim,caller):
         global counter, all_lists
         Mainscreenvar = sm.get_screen("MainScreen")
+
         if counter+1 == 4:
             card1_to_edit = 'ele1'
         else:
             card1_to_edit = 'ele{}'.format(counter+1)
-        anim1 = Animation(pos_hint = {'center_x':.5, "center_y":.5}, elevation = 13, size_hint =(.85, .70),
-                          duration = .3, md_bg_color = (50/255,49/255,61/255,1),opacity = 1)
-        anim2 = Animation(angle = 0, duration = .4,  )
-        anim1.start(Mainscreenvar.ids[card1_to_edit].children[0])
-        anim2.start(Mainscreenvar.ids[card1_to_edit].canvas.before.children[-1])
+        #We get the card that we want to morph into so that we can access its properties
+        previous_card = Mainscreenvar.ids['ele'+str(counter)]
+        anim1 = Animation(pos = self.card1_pos,size = self.card1_size,
+                                     duration = .3, md_bg_color = (50/255,49/255,61/255,1),opacity = 1, s = 1/30)
+        anim1.start(Mainscreenvar.ids[card1_to_edit])
+
         if counter+2 == 4:
             card2_to_edit = 'ele1'
+            previous_card = Mainscreenvar.ids['ele3']
         elif counter+2 == 5:
             card2_to_edit = 'ele2'
+            previous_card = Mainscreenvar.ids['ele1']
         else:
             card2_to_edit = 'ele{}'.format(counter+2)
-
-        anim3 = Animation(pos_hint = {'center_x':.45, "center_y":.5}, elevation = 0, size_hint =(.78, .70),
-                          duration = .5, md_bg_color = (70/255,69/255,81/255,1),opacity = 1)
-        anim4 = Animation(angle = 3, duration = .5,  )
-        anim3.start(Mainscreenvar.ids[card2_to_edit].children[0])
-        anim4.start(Mainscreenvar.ids[card2_to_edit].canvas.before.children[-1])
+            previous_card = Mainscreenvar.ids['ele'+str(counter+1)]
+        anim3 = Animation(pos = self.card2_pos, size = self.card2_size, duration = .3,
+                                    md_bg_color = (70/255,69/255,81/255,1),opacity = 1, s = 1/30)
+        anim3.start(Mainscreenvar.ids[card2_to_edit])
         new_card_id = "ele{}".format(counter)
         new_card = Mainscreenvar.ids[new_card_id]
-        new_card_blueprint = ListBlueprint()
-        new_card_blueprint.pos_hint = {'center_x':.1, "center_y":.5}
-        new_card_blueprint.size_hint = (.73,.70)
-        new_card_blueprint.md_bg_color = (90/255,89/255,101/255,1)
-        new_card_blueprint.opacity = 0
-        anim5 = Animation(angle = 5, duration = .2,  )
-        anim6 = Animation(opacity = 1, pos_hint = {'center_x':.42, "center_y":.5}, duration = .4,  )
-        anim5.start(Mainscreenvar.ids[new_card_id].canvas.before.children[-1])
-        anim6.start(new_card_blueprint)
-        Mainscreenvar.remove_widget(Mainscreenvar.ids[new_card_id])
+        new_card.opacity = 0
+        new_card.size = self.card3_size
+        new_card.pos = (Window.center[0] - new_card.width/1.5, Window.center[1]-new_card.height/3)
+        new_card.swipable = False
+        Mainscreenvar.remove_widget(new_card)
+        new_card.md_bg_color = (90/255,89/255,101/255,1)
+        anim6 = Animation(opacity = 1, pos = self.card3_pos, duration = .3)
+        anim6.start(new_card)
+
+        #We set the action button opacity to 1 also in case user has swiped away from the create list card
+        if not Mainscreenvar.ids.action_button.opacity:
+            Mainscreenvar.ids.action_button.opacity = 1
+
         Mainscreenvar.add_widget(new_card, 4)
-        new_card.add_widget(new_card_blueprint)
         if counter != 3:
             counter +=1
         else:
             counter = 1
 
-        if operation == 0:
+        if operation == 0: #This is a normal swipe to next card
             ele = collections.deque(all_lists)
             ele.rotate(-1)
             all_lists = ele
             Clock.schedule_once(partial(MainViewHandler.load_next_list_title,self, 0),.2)
-        elif operation == 1:
+        elif operation == 1: # This is a create new list from the no lsit menue
             Clock.schedule_once(partial(Creator.create_new_list_load_ui,self),.65)
             Mainscreenvar.ids.action_button.opacity = 0
             Mainscreenvar.ids.action_button.pos_hint = {'center_x':.85, 'center_y':.08}
-        elif operation == 2:
+            Mainapp.creating_new_list = True #When this is true it will disable the peek behaviour
+        elif operation == 2: #This is a normal create new list
             Clock.schedule_once(partial(Creator.create_new_list_load_ui,self),.4)
+            Mainscreenvar.ids[card1_to_edit].clear_widgets()
+            Mainapp.creating_new_list = True #When this is true it will disable the peek behaviour
 
     def load_next_list_title(self, delay, *args):
-        if all_lists:
+        card_to_add_to = 'ele{}'.format(counter)
+        Mainscreenvar = sm.get_screen("MainScreen")
+        Mainscreenvar.ids[card_to_add_to].swipable = True
+        if not all_lists:
+            pass
+        elif all_lists and len(Mainscreenvar.ids[card_to_add_to].children) == 0:
             mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC LIMIT 6".format(all_lists[0]))
             data = mycursor.fetchall()
-            Mainscreenvar = sm.get_screen("MainScreen")
-            card_to_add_to = 'ele{}'.format(counter)
             self.list_content = ListContent()
             self.list_content.ids.heading.text = all_lists[0].replace('_', ' ')
             self.list_content.ids.view_button.bind(on_press = partial(OpenListView.list_view_loader_transition, self,1))
-            Mainscreenvar.ids[card_to_add_to].children[0].add_widget(self.list_content)
+            Mainscreenvar.ids[card_to_add_to].add_widget(self.list_content)
+            if delay == 0:
+                event = Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data),.4)
+            else:
+                event = Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders, self, data), delay)
+        else:
+            mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC LIMIT 6".format(all_lists[0]))
+            data = mycursor.fetchall()
             if delay == 0:
                 event = Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders,self,data),.4)
             else:
                 event = Clock.schedule_once(partial(MainViewHandler.load_next_list_reminders, self, data), delay)
 
     def load_next_list_reminders(self, data, *args):
-        self.list_content.ids.reminder_container.opacity =0
-        for a in data:
-            list_reminder_element = ListReminderElement()
-            list_reminder_element.ids.check_box.bind(on_press = partial(MainViewHandler.reminder_complete_handler, self))
-            list_reminder_element.name = a[4]
-            if not a[1].isspace():
-                text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]' + '\n' + \
-                '[font=Roboto-Regular.ttf][size=16sp][color=#808080]' + a[1] + '[/color][/size][/font]'
+        Mainscreenvar = sm.get_screen("MainScreen")
+        card = "ele"+str(counter)
+        if not self.loaded_behind_reminders:
+            self.list_content.ids.reminder_container.opacity = 0
+            for a in data:
+                list_reminder_element = ListReminderElement()
+                list_reminder_element.ids.check_box.bind(on_press = partial(MainViewHandler.reminder_complete_handler, self))
+                list_reminder_element.name = a[4]
+                if a[1]:
+                    text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]' + '\n' + \
+                    '[font=Roboto-Regular.ttf][size=16sp][color=#808080]' + a[1] + '[/color][/size][/font]'
+                else:
+                    text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]'
+                list_reminder_element.ids.text.text = text_to
+                if a[6] == 1:
+                    list_reminder_element.completed = True
+                    list_reminder_element.ids.text.strikethrough = True
+
+                self.list_content.ids.reminder_container.add_widget(list_reminder_element)
+            anim1 = Animation(opacity = 1, duration = .5)
+            anim1.start(self.list_content.ids.reminder_container)
+        else:
+            self.loaded_behind_reminders = False #Reset this varaiable
+    def load_behind_title(self,*args):
+        self = Mainapp.get_running_app()
+        Mainscreenvar = sm.get_screen("MainScreen")
+        if counter+1 == 4:
+            card_to_add_to = 'ele1'
+        else:
+            card_to_add_to = 'ele{}'.format(counter+1)
+        if not len(Mainscreenvar.ids[card_to_add_to].children):
+            self.list_content = ListContent()
+            self.list_content.opacity = 0
+            if len(all_lists)>1:
+                self.list_content.ids.heading.text = all_lists[1].replace('_', ' ')
             else:
-                text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]'
-            list_reminder_element.ids.text.text = text_to
-            if a[6] == 1:
-                list_reminder_element.completed = True
-                list_reminder_element.ids.text.strikethrough = True
-            self.list_content.ids.reminder_container.add_widget(list_reminder_element)
-        Mainapp.swiping = False
-        anim1 = Animation(opacity = 1, duration = .5)
-        anim1.start(self.list_content.ids.reminder_container)
+                self.list_content.ids.heading.text = all_lists[0].replace('_', ' ')
+            self.list_content.ids.view_button.bind(on_press = partial(OpenListView.list_view_loader_transition, self,1))
+            Animation(opacity = 1, duration = .3, s = 1/20).start(self.list_content)
+            Mainscreenvar.ids[card_to_add_to].add_widget(self.list_content)
+
+    def load_behind_reminder(self, *args):
+        self = Mainapp.get_running_app()
+        Mainscreenvar = sm.get_screen("MainScreen")
+        if len(all_lists)>0:
+            try:
+                no = all_lists[1]
+            except:
+                no = all_lists[0] #In case of any error we default to the current list just in case
+        else:
+            no = all_lists[0]
+        if counter+1 == 4:
+            card_to_add_to = 'ele1'
+        else:
+            card_to_add_to = 'ele{}'.format(counter+1)
+        mycursor.execute("SELECT * FROM {} ORDER BY creation_order DESC LIMIT 6".format(no))
+        data = mycursor.fetchall()
+        if not len(Mainscreenvar.ids[card_to_add_to].children[0].ids.reminder_container.children):
+            for a in data:
+                Mainscreenvar.ids[card_to_add_to].children[0].ids.reminder_container.opacity =0
+                list_reminder_element = ListReminderElement()
+                list_reminder_element.ids.check_box.bind(on_press = partial(MainViewHandler.reminder_complete_handler, self))
+                list_reminder_element.name = a[4]
+                if a[1]:
+                    text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]' + '\n' + \
+                    '[font=Roboto-Regular.ttf][size=16sp][color=#808080]' + a[1] + '[/color][/size][/font]'
+                else:
+                    text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]'
+                list_reminder_element.ids.text.text = text_to
+                if a[6] == 1:
+                    list_reminder_element.completed = True
+                    list_reminder_element.ids.text.strikethrough = True
+                Mainscreenvar.ids[card_to_add_to].children[0].ids.reminder_container.add_widget(list_reminder_element)
+            anim1 = Animation(opacity = 1, duration = .3, s = 1/20)
+            anim1.start(Mainscreenvar.ids[card_to_add_to].children[0].ids.reminder_container)
+        self.loaded_behind_reminders = True #THis varaiable is used to check to prevent app from crashing
 
     def reminder_complete_handler(self, instance):
         if instance.parent.completed == False:
@@ -215,11 +318,11 @@ class MainViewHandler():
     def no_lists(self):
         card_to_drop = "ele{}".format(counter)
         Mainscreenvar = sm.get_screen("MainScreen")
-        Mainscreenvar.ids[card_to_drop].children[0].clear_widgets()
-        anim1 = Animation(pos_hint = {'center_x':-1}, duration = .6)
-        anim1.start(Mainscreenvar.ids.ele1.children[0])
-        anim1.start(Mainscreenvar.ids.ele2.children[0])
-        anim1.start(Mainscreenvar.ids.ele3.children[0])
+        Mainscreenvar.ids[card_to_drop].clear_widgets()
+        anim1 = Animation(pos = (Window.center[0]-Mainscreenvar.ids[card_to_drop].width/2,-Window.height), duration = .6)
+        anim1.start(Mainscreenvar.ids.ele1)
+        anim1.start(Mainscreenvar.ids.ele2)
+        anim1.start(Mainscreenvar.ids.ele3)
         Animation(pos_hint = {'center_x':.5, 'center_y':.40}, duration = .5, t = 'in_out_circ').start(Mainscreenvar.ids.action_button)
         MainViewHandler.label1 = MDLabel(text = 'Looks like you have no lists', pos_hint = {'center_x':.5,'center_y':.55},
                                                             font_style = 'H5',font_name = 'Roboto-Medium.ttf', halign = 'center',  theme_text_color = 'Custom',
@@ -234,30 +337,32 @@ class MainViewHandler():
         anim2 = Animation(opacity = 1, duration = .6)
         anim2.start(MainViewHandler.label1)
         anim2.start(MainViewHandler.label2)
-        MainViewHandler.swiping = True
+
 
 class OpenListView():
 
     def list_view_loader_transition(self, op,caller):
         global current_list, current_app_location
-        current_list = all_lists[0]
         Mainscreenvar = sm.get_screen("MainScreen")
+        current_list = all_lists[0]
+        card = 'ele'+str(counter)
+        Mainscreenvar.ids[card].swipable = False
         current_app_location = 'IndividualListView'
         if op == 1:
-            anim1 = Animation(size_hint = (1,1), radius=(0,0,0,0), duration = .5, t = 'in_out_circ')
-            anim2 = Animation(pos_hint = {'center_x':.5, 'center_y':-2}, duration = .7, t = 'in_out_circ')
-            anim3 = Animation(pos_hint = {'center_x':.5, 'center_y':-2}, duration = .9, t = 'in_out_circ')
+            anim1 = Animation(radius=(0,0,0,0), duration = .5, t = 'in_out_circ', size = (Window.width, Window.height), pos = (0,0))
+            anim2 = Animation(pos = (Window.center[0]-Mainscreenvar.children[2].width/2, -dp(500)), duration = .4, t = 'in_out_circ')
+            anim3 = Animation(pos = (Window.center[0]-Mainscreenvar.children[2].width/2, -dp(500)), duration = .4, t = 'in_out_circ')
             anim1.bind(on_complete = partial(OpenListView.list_view_loader, self))
-            anim1.start(Mainscreenvar.children[1].children[0])
-            anim2.start(Mainscreenvar.children[2].children[0])
-            anim3.start(Mainscreenvar.children[3].children[0])
+            anim1.start(Mainscreenvar.children[1])
+            anim2.start(Mainscreenvar.children[2])
+            anim3.start(Mainscreenvar.children[3])
             name = 'ele{}'.format(counter)
-            Mainscreenvar.ids[name].children[0].clear_widgets()
+            Mainscreenvar.ids[name].clear_widgets()
             self.update_data = threading.Thread(target = partial(OpenListView.sort_by_creation, self), name = 'loader')
             self.update_data.start()
         else:
             name = 'ele{}'.format(counter)
-            Mainscreenvar.ids[name].children[0].clear_widgets()
+            Mainscreenvar.ids[name].clear_widgets()
             self.update_data = threading.Thread(target = partial(OpenListView.sort_by_creation, self), name = 'loader')
             self.update_data.start()
             Clock.schedule_once(partial(OpenListView.list_view_loader,self,None),0)
@@ -269,9 +374,8 @@ class OpenListView():
         self.list_view_banner.ids.back_button.bind(on_press = partial(OpenListView.back_op, self))
         self.list_view_banner.ids.delete_button.bind(on_press = partial(OpenListView.list_deleter, self))
         self.list_view_banner.ids.list_title.text = current_list.replace("_", " ")
-        Mainscreenvar.ids[name].children[0].add_widget(self.list_view_banner)
-        Mainscreenvar.ids[name].children[0].add_widget(self.list_view_element)
-        Mainapp.swiping = True
+        Mainscreenvar.ids[name].add_widget(self.list_view_banner)
+        Mainscreenvar.ids[name].add_widget(self.list_view_element)
 
 
     def sort_by_creation(self):
@@ -311,17 +415,23 @@ class OpenListView():
 
 
     def back_op(self,caller):
+        #If mode is 0 then we have a back op that is leading to normal back and we do all animations
+        #If mode is 1 then we have a back op to the no list screen so we dont do the animation for the main list shrinking
         global current_app_location
         Mainscreenvar = sm.get_screen("MainScreen")
         name = 'ele{}'.format(counter)
-        anim1 = Animation(size_hint = (.85,.70), radius=(60,60,60,60), duration = .5, t = 'in_out_circ')
-        anim1.start(Mainscreenvar.ids[name].children[0])
+        Mainscreenvar.ids[name].swipable = True
+        #Reset the position for the main card up front
         if all_lists:
-            anim2 = Animation(pos_hint = {'center_x':.45, 'center_y':.5}, duration = .7, t = 'in_out_circ')
-            anim3 = Animation(pos_hint = {'center_x':.42, 'center_y':.5}, duration = .9, t = 'in_out_circ')
-            anim2.start(Mainscreenvar.children[2].children[0])
-            anim3.start(Mainscreenvar.children[3].children[0])
-        Mainscreenvar.ids[name].children[0].clear_widgets()
+            anim1 = Animation(size = self.card1_size,pos = self.card1_pos, duration = .5, t = 'in_out_circ', radius = (40,40,40,40))
+            anim1.start(Mainscreenvar.ids[name])
+            anim2 = Animation(pos = self.card2_pos, duration = .7, t = 'in_out_circ')
+            anim3 = Animation(pos = self.card3_pos, duration = .9, t = 'in_out_circ')
+            anim2.start(Mainscreenvar.children[2])
+            anim3.start(Mainscreenvar.children[3])
+            Mainscreenvar.ids[name].clear_widgets()
+        else:
+            Mainscreenvar.ids[name].radius = (40,40,40,40)
         current_app_location = 'MainScreen'
         Mainscreenvar.ids.action_button.data = {'New List':'format-list-checkbox'}
         MainViewHandler.load_next_list_title(self, 1)
@@ -350,7 +460,6 @@ class OpenListView():
 
 class IndividualReminderView():
     def screen_switcher(self,reminder):
-        Mainapp.swiping = True
         sm.current = 'ReminderScreen'
         Clock.schedule_once(partial(IndividualReminderView.heading_loader, self, reminder, 0),.4)
 
@@ -574,23 +683,22 @@ class IndividualReminderView():
                                 )
         mycursor.execute(insert_command)
         connection.commit()
-
         if not self.new_timings: #We are saving nothing into the database so clear all previous reminders
-            if eval(self.reminder_data[2])[0].isalpha():
-                AlarmDateTimeHandler.remove_all(self,self.reminder_data[-1], True)
-            else:
-                AlarmDateTimeHandler.remove_all(self,self.reminder_data[-1], False)
+            if eval(self.reminder_data[2]): #Make sure that there was some data before that needs to cleared
+                if eval(self.reminder_data[2])[0].isalpha():
+                    AlarmDateTimeHandler.remove_all(self,self.reminder_data[-1], True)
+                else:
+                    AlarmDateTimeHandler.remove_all(self,self.reminder_data[-1], False)
         elif self.new_timings[0].isalpha():
             AlarmDateTimeHandler.days_handler(self,self.new_timings, self.timing.ids.time_picker.text, self.reminder_data[-1], 1)
         else:
             AlarmDateTimeHandler.dates_handler(self,self.new_timings,self.timing.ids.time_picker.text, self.reminder_data[-1], 1)
 
-        if app_current_location != 'MainScreen':
+        if current_app_location != 'MainScreen':
             OpenListView.view_updater(self)
             IndividualReminderView.back_op(self, None)
         else:
             IndividualReminderView.back_op(self, None)
-            Mainapp.swiping = False
 
     def changes_checker(*args):
         self = MDApp.get_running_app()
@@ -642,7 +750,6 @@ class IndividualReminderView():
 class Creator():
     def create_new_list_load_ui(self, time):
         Mainscreenvar = sm.get_screen("MainScreen")
-        Mainapp.swiping = True
         Mainscreenvar.ids.action_button.opacity = 0
         anim1 = Animation(pos_hint = {'center_x':.85, 'center_y':.08}, duration = .3, t = 'in_out_circ')
         anim1.start(Mainscreenvar.ids.action_button)
@@ -651,7 +758,7 @@ class Creator():
         newlist.ids.confirm_button.bind(on_press = partial(Creator.create_new_list, self))
         newlist.ids.cancel_button.bind(on_press = partial(Creator.cancel_new_list, self))
         current_card = 'ele' + str(counter)
-        Mainscreenvar.ids[current_card].children[0].add_widget(newlist)
+        Mainscreenvar.ids[current_card].add_widget(newlist)
         anim2 = Animation(opacity = 1, duration = .3)
         anim2.start(newlist)
 
@@ -708,20 +815,17 @@ class Creator():
 
         all_lists.sort()
         all_lists.insert(1, new_name)
-        Mainapp.swiping = False
         MainViewHandler.slider(self, 0, None)
 
     def cancel_new_list(self, instance):
         Mainscreenvar = sm.get_screen("MainScreen")
         Mainscreenvar.ids.action_button.opacity = 1
         if all_lists:
-            Mainapp.swiping = False
             MainViewHandler.slider(self,0, None)
         else:
             MainViewHandler.no_lists(self)
 
     def screen_switcher(self):
-        Mainapp.swiping = True
         sm.current = 'ReminderScreen'
         Clock.schedule_once(partial(Creator.load_heading,self), .3)
 
@@ -754,7 +858,6 @@ class Creator():
         self.timing.ids.type.bind(selected =Creator.changer)
         # self.timing.ids.label1.font_size =
         Remindervar.ids.container.add_widget(self.timing)
-        Clock.schedule_once(partial(Creator.load_saving, self),.3)
 
     def changer(instance,value,*args):
         self = Mainapp.get_running_app()
@@ -870,15 +973,25 @@ class Creator():
                 new_dates.append(dates.ids.date_picker.text)
         else:
             new_dates = []
-        description = self.description.ids.description.text
-        mycursor.execute( 'INSERT INTO {} (title,description,date, time, rem_id,color, state) VALUES("{}","{}","{}","{}", {},0,0)'.format(
-                current_list,
-                self.heading.ids.heading.text,
-                description,
-                new_dates,
-                self.timing.ids.time_picker.text,
-                new_reminder_id
-        ))
+        text = self.description.ids.description.text
+        if text.isspace() or text == '' and False:
+            mycursor.execute( 'INSERT INTO {} (title,description,date,time,rem_id,color,state) VALUES("{}","{}","{}","{}", {},0,0)'.format(
+                    current_list,
+                    self.heading.ids.heading.text,
+                    None,
+                    new_dates,
+                    self.timing.ids.time_picker.text,
+                    new_reminder_id
+            ))
+        else:
+            mycursor.execute( 'INSERT INTO {} (title,description,date,time,rem_id,color,state) VALUES("{}","{}","{}","{}", {},0,0)'.format(
+                    current_list,
+                    self.heading.ids.heading.text,
+                    text,
+                    new_dates,
+                    self.timing.ids.time_picker.text,
+                    new_reminder_id
+            ))
         connection.commit()
 
         #Update the timing in the alarm manager
@@ -909,7 +1022,6 @@ class Creator():
         Remindervar.ids.back_button.unbind(on_release = Creator.back_op)
         self.saving.ids.save_button.unbind(on_release = Creator.save)
         self.saving.ids.cancel_button.unbind(on_release = Creator.back_op)
-        Mainapp.swiping = False
 
 class AlarmDateTimeHandler():
 
@@ -986,7 +1098,6 @@ class NotificationHandler():
 
     def open_reminder(self,list,id):
         global current_list, current_app_location
-        Mainapp.swiping = True
         current_list = list
         current_app_location = 'MainScreen'
         sm.current = 'ReminderScreen'
@@ -998,8 +1109,68 @@ class ListReminderElement(BoxLayout):
 class ListContent(RelativeLayout):
     pass
 
-class ListBlueprint(MDCard):
-    pass
+class ListBlueprint(DragBehavior ,MDCard):
+
+    t = 0
+
+    start_d = 0
+
+    end_d = 0
+
+    v_x = 0
+
+    v_y = 0
+
+    swipable = BooleanProperty(False)
+
+    def on_touch_down(self, touch):
+        # MainViewHandler.slider(self,0,None)
+        if self.collide_point(*touch.pos):
+            if self.swipable:
+                self.clock = Clock.schedule_interval(self.time_ticker, .01)
+                self.start_d = touch.pos
+        return super(ListBlueprint, self).on_touch_down(touch)
+
+    def time_ticker(self,*args):
+        self.t+=1
+        if self.t == 50:
+            threading.Thread(target = MainViewHandler.load_behind_title(self), name = 'behind_title').start()
+        if self.t == 100:
+            threading.Thread(target = MainViewHandler.load_behind_reminder(self), name = 'behind_reminder').start()
+
+    def on_touch_up(self, touch):
+        # MainViewHandler.slider(self,0,None)
+        if self.collide_point(*touch.pos):
+            if self.swipable:
+                try:
+                    self.clock.cancel()
+                    self.end_d= touch.pos
+                    v_x = (self.start_d[0]-self.end_d[0])/self.t
+                    v_y = (self.start_d[1]-self.end_d[1])/self.t
+                    if abs(v_x)>40 or abs(v_y)>40 and all_lists:
+                        if v_x<0:
+                            anim1 = Animation(x = Window.width*2, d = .5)
+                            anim1.start(self)
+                            if v_y<0:
+                                Animation(y = Window.height*2, d = .5).start(self)
+                            else:
+                                Animation(y = -Window.height*2, d= .5).start(self)
+                        else:
+                            anim1 = Animation(x = -Window.width*2, d = .5)
+                            anim1.start(self)
+                            if v_y<0:
+                                Animation(y = Window.height*2, d = .5).start(self)
+                            else:
+                                Animation(y = -Window.height*2, d= .5).start(self)
+                        Clock.schedule_once(partial(MainViewHandler.slider, self,0,None), .3)
+                    else:
+                        Animation(pos=(Window.center[0]-self.width/2,Window.center[1]-self.height/2), d = .25, t = 'in_out_circ').start(self)
+                except:
+                    pass
+
+            self.t = 0
+        return super(ListBlueprint, self).on_touch_up(touch)
+
 
 class ListViewBanner(MDCard):
     pass
@@ -1047,10 +1218,13 @@ class ReminderDaySelector(MDChipContainer):
 class ReminderDatesBlueprint(GridLayout):
     pass
 
+class ReminderAlertBlueprint(MDCard):
+    pass
+
 class ReminderSaveBlueprint(MDCard):
     pass
 
-class ScreenManagerMain(ScreenManager, gesture.GestureBox):
+class ScreenManagerMain(ScreenManager):
     pass
 
 counter = 1
@@ -1066,8 +1240,6 @@ class Mainapp(MDApp):
         Window.bind(on_keyboard=self.on_key)
         sm.add_widget(MainScreen(name = 'MainScreen'))
         sm.add_widget(ReminderScreen(name = 'ReminderScreen'))
-        Mainapp.swiping = False
-        sm.bind(on_swipe_down = partial(MainViewHandler.slider, self, 0))
         return sm
 
     def on_receive(self):
@@ -1097,8 +1269,10 @@ class Mainapp(MDApp):
         self.timing.ids.time_picker.bind(on_press = self.time_picker.open)
         self.created = False
         self.timing.opacity = 1
+        self.alertness_level = ReminderAlertBlueprint()
         self.saving = ReminderSaveBlueprint()
         self.on_receive()
+        self.loaded_behind_reminders = False
         MainViewHandler.all_lists_loader(self, 0)
 
     def plus_button_callback(self):
