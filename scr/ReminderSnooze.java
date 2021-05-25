@@ -22,7 +22,7 @@ public class ReminderSnooze extends BroadcastReceiver{
       snoozedrem.putExtra("INTENT_ID", intent.getExtras().getShort("INTENT_ID"));
       PendingIntent pendingsnoozedrem = PendingIntent.getBroadcast(context, intent.getExtras().getShort("INTENT_ID"), snoozedrem, PendingIntent.FLAG_CANCEL_CURRENT);
       Calendar calendar = Calendar.getInstance();
-      Long timetoring = calendar.getTimeInMillis() + 5*1000;
+      Long timetoring = calendar.getTimeInMillis() + 10*60*60*1000;
       AlarmManager alarmManager=(AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
       alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,timetoring, pendingsnoozedrem);
 
