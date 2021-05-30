@@ -270,7 +270,7 @@ class MDChip(ThemableBehavior, ButtonBehavior, BoxLayout):
         Clock.schedule_once(self.set_color, 0)
 
     def set_color(self, *args):
-        self._color = self. self.theme_cls.primary_color \
+        self._color = self.theme_cls.primary_color \
                             if not self.color \
                             else self.color
         if self.active:
