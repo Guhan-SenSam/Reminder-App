@@ -22,9 +22,10 @@ from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.uix.behaviors import DragBehavior
-from kivy.properties import BooleanProperty
+from kivy.properties import BooleanProperty, ListProperty
 from kivy.metrics import dp
 
+from theming import ThemeManager
 
 from functools import partial
 import sqlite3
@@ -34,8 +35,8 @@ import threading
 
 import time
 import datetime
-import re
 import random
+import re
 
 if platform == 'android':
     from reminderscheduler import ReminderScheduler
@@ -107,10 +108,10 @@ class MainViewHandler():
         for a in data:
             self.list_reminder_element = ListReminderElement()
             if a[1]:
-                text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]' + '\n' + \
-                '[font=Roboto-Regular.ttf][size=16sp][color=#808080]' + a[1] + '[/color][/size][/font]'
+                text_to = '[font=Roboto-Black.ttf][size=18sp][color=' +self.rgb2hex(self.text_color) + ']' + a[0] +  '[/color][/size][/font]' + '\n' + \
+                '[font=Roboto-Regular.ttf][size=16sp][color=' +self.rgb2hex(self.secondary_text_color) +']' + a[1] + '[/color][/size][/font]'
             else:
-                text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]'
+                text_to = '[font=Roboto-Black.ttf][size=18sp][color=' +self.rgb2hex(self.text_color) + ']' + a[0] +  '[/color][/size][/font]'
             self.list_reminder_element.ids.text.text = text_to
             self.list_reminder_element.ids.check_box.bind(on_press = partial(MainViewHandler.reminder_complete_handler, self))
             self.list_reminder_element.name = a[4]
@@ -149,7 +150,7 @@ class MainViewHandler():
         #We get the card that we want to morph into so that we can access its properties
         previous_card = Mainscreenvar.ids['ele'+str(counter)]
         anim1 = Animation(pos = self.card1_pos,size = self.card1_size,
-                                     duration = .3, md_bg_color = (50/255,49/255,61/255,1),opacity = 1, s = 1/30)
+                                     duration = .3, md_bg_color = self.primary_color,opacity = 1,)
         anim1.start(Mainscreenvar.ids[card1_to_edit])
 
         if counter+2 == 4:
@@ -162,16 +163,17 @@ class MainViewHandler():
             card2_to_edit = 'ele{}'.format(counter+2)
             previous_card = Mainscreenvar.ids['ele'+str(counter+1)]
         anim3 = Animation(pos = self.card2_pos, size = self.card2_size, duration = .3,
-                                    md_bg_color = (70/255,69/255,81/255,1),opacity = 1, s = 1/30)
+                                    md_bg_color = self.secondary_color,opacity = 1)
         anim3.start(Mainscreenvar.ids[card2_to_edit])
         new_card_id = "ele{}".format(counter)
         new_card = Mainscreenvar.ids[new_card_id]
         new_card.opacity = 0
         new_card.size = self.card3_size
-        new_card.pos = (Window.center[0] - new_card.width/1.5, Window.center[1]-new_card.height/3)
+        # new_card.pos = (Window.center[0] - new_card.width/1.5, Window.center[1]-new_card.height/3)
+        new_card.pos = (Window.center[0] - new_card.width/2, Window.center[1]-new_card.height/3)
         new_card.swipable = False
         Mainscreenvar.remove_widget(new_card)
-        new_card.md_bg_color = (90/255,89/255,101/255,1)
+        new_card.md_bg_color = self.tertiary_color
         anim6 = Animation(opacity = 1, pos = self.card3_pos, duration = .3)
         anim6.start(new_card)
 
@@ -189,13 +191,14 @@ class MainViewHandler():
             ele = collections.deque(all_lists)
             ele.rotate(-1)
             all_lists = ele
-            Clock.schedule_once(partial(MainViewHandler.load_next_list_title,self, 0),.2)
+            Clock.schedule_once(partial(MainViewHandler.load_next_list_title,self, 0),.3)
         elif operation == 1: # This is a create new list from the no lsit menue
             Clock.schedule_once(partial(Creator.create_new_list_load_ui,self),.65)
             Mainscreenvar.ids.action_button.opacity = 0
             Mainscreenvar.ids.action_button.pos_hint = {'center_x':.85, 'center_y':.08}
             Mainapp.creating_new_list = True #When this is true it will disable the peek behaviour
         elif operation == 2: #This is a normal create new list
+            Mainscreenvar.ids[card1_to_edit].clear_widgets()
             Clock.schedule_once(partial(Creator.create_new_list_load_ui,self),.4)
             Mainscreenvar.ids[card1_to_edit].clear_widgets()
             Mainapp.creating_new_list = True #When this is true it will disable the peek behaviour
@@ -235,10 +238,10 @@ class MainViewHandler():
                 list_reminder_element.ids.check_box.bind(on_press = partial(MainViewHandler.reminder_complete_handler, self))
                 list_reminder_element.name = a[4]
                 if a[1]:
-                    text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]' + '\n' + \
-                    '[font=Roboto-Regular.ttf][size=16sp][color=#808080]' + a[1] + '[/color][/size][/font]'
+                    text_to = '[font=Roboto-Black.ttf][size=18sp][color=' +self.rgb2hex(self.text_color) + ']' + a[0] +  '[/color][/size][/font]' + '\n' + \
+                    '[font=Roboto-Regular.ttf][size=16sp][color=' +self.rgb2hex(self.secondary_text_color) +']' + a[1] + '[/color][/size][/font]'
                 else:
-                    text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]'
+                    text_to = '[font=Roboto-Black.ttf][size=18sp][color=' +self.rgb2hex(self.text_color) + ']' + a[0] +  '[/color][/size][/font]'
                 list_reminder_element.ids.text.text = text_to
                 if a[6] == 1:
                     list_reminder_element.completed = True
@@ -290,10 +293,10 @@ class MainViewHandler():
                 list_reminder_element.ids.check_box.bind(on_press = partial(MainViewHandler.reminder_complete_handler, self))
                 list_reminder_element.name = a[4]
                 if a[1]:
-                    text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]' + '\n' + \
-                    '[font=Roboto-Regular.ttf][size=16sp][color=#808080]' + a[1] + '[/color][/size][/font]'
+                    text_to = '[font=Roboto-Black.ttf][size=18sp][color=' +self.rgb2hex(self.text_color) + ']' + a[0] +  '[/color][/size][/font]' + '\n' + \
+                    '[font=Roboto-Regular.ttf][size=16sp][color=' +self.rgb2hex(self.secondary_text_color) +']' + a[1] + '[/color][/size][/font]'
                 else:
-                    text_to = '[font=Roboto-Black.ttf][size=18sp]' + a[0] + '[/size][/font]'
+                    text_to = '[font=Roboto-Black.ttf][size=18sp][color=' +self.rgb2hex(self.text_color) + ']' + a[0] +  '[/color][/size][/font]'
                 list_reminder_element.ids.text.text = text_to
                 if a[6] == 1:
                     list_reminder_element.completed = True
@@ -338,7 +341,6 @@ class MainViewHandler():
         anim2.start(MainViewHandler.label1)
         anim2.start(MainViewHandler.label2)
 
-
 class OpenListView():
 
     def list_view_loader_transition(self, op,caller):
@@ -357,7 +359,12 @@ class OpenListView():
             anim2.start(Mainscreenvar.children[2])
             anim3.start(Mainscreenvar.children[3])
             name = 'ele{}'.format(counter)
+            if counter+1 == 4:
+                card_behind = 'ele1'
+            else:
+                card_behind = 'ele{}'.format(counter+1)
             Mainscreenvar.ids[name].clear_widgets()
+            Mainscreenvar.ids[card_behind].clear_widgets()
             self.update_data = threading.Thread(target = partial(OpenListView.sort_by_creation, self), name = 'loader')
             self.update_data.start()
         else:
@@ -421,6 +428,10 @@ class OpenListView():
         Mainscreenvar = sm.get_screen("MainScreen")
         name = 'ele{}'.format(counter)
         Mainscreenvar.ids[name].swipable = True
+        if counter+1 == 4:
+            card_behind = 'ele1'
+        else:
+            card_behind = 'ele{}'.format(counter+1)
         #Reset the position for the main card up front
         if all_lists:
             anim1 = Animation(size = self.card1_size,pos = self.card1_pos, duration = .5, t = 'in_out_circ', radius = (40,40,40,40))
@@ -434,6 +445,7 @@ class OpenListView():
             Mainscreenvar.ids[name].radius = (40,40,40,40)
         current_app_location = 'MainScreen'
         Mainscreenvar.ids.action_button.data = {'New List':'format-list-checkbox'}
+        self.loaded_behind_reminders = False
         MainViewHandler.load_next_list_title(self, 1)
 
 
@@ -538,7 +550,7 @@ class IndividualReminderView():
             self.timing.ids.none.active = False
             self.timing.ids.days_container.orientation = 'vertical'
             data = list(self.reminder_dates)
-            plus_button = MDIconButton(icon = 'plus', md_bg_color = (218/255,68/255,83/255,1),
+            plus_button = MDIconButton(icon = 'plus', md_bg_color = self.accent_color,
                                                             pos_hint = {'center_x':.5})
             plus_button.bind(on_release = partial(IndividualReminderView.new_date_adder, self))
             self.timing.ids.holder.add_widget(plus_button)
@@ -555,8 +567,8 @@ class IndividualReminderView():
         Remindervar = sm.get_screen('ReminderScreen')
         if data:
             ele = MDChip(text = data[0][0],
-                         selected_chip_color = (218/255,68/255,83/255,1),
-                         color = (50/255,49/255,61/255,1),
+                         selected_chip_color = self.accent_color,
+                         color = self.primary_color,
                          icon = '',
                          name = data[0][1],
                          active = data[0][2]
@@ -587,7 +599,7 @@ class IndividualReminderView():
         if 'Dates' in value and self.created:
             self.timing.ids.days_container.clear_widgets()
             self.timing.ids.days_container.orientation = 'vertical'
-            plus_button = MDIconButton(icon = 'plus', md_bg_color = (218/255,68/255,83/255,1),
+            plus_button = MDIconButton(icon = 'plus', md_bg_color = self.accent_color,
                                                             pos_hint = {'center_x':.5})
             plus_button.bind(on_release = partial(IndividualReminderView.new_date_adder, self))
             self.timing.ids.holder.add_widget(plus_button)
@@ -801,6 +813,10 @@ class Creator():
 
     def reset_list_create(self, new_name):
         global all_lists
+        themes = {'a':'Slate', 'b':'DeadWood', 'c':'SnowWhite', 'd':'Candy', 'e':'PureWhite', 'f':'PureBlack'}
+        if new_name in themes.keys():
+            self.set_theme(themes[new_name])
+            toast("Set theme to "+ themes[new_name])
         Mainscreenvar = sm.get_screen("MainScreen")
         anim2 = Animation(opacity = 1, duration = .3, t = 'in_out_circ')
         anim2.start(Mainscreenvar.ids.action_button)
@@ -856,8 +872,8 @@ class Creator():
         self.timing.ids.dates.active = False
         self.timing.ids.none.active = True
         self.timing.ids.type.bind(selected =Creator.changer)
-        # self.timing.ids.label1.font_size =
         Remindervar.ids.container.add_widget(self.timing)
+        Clock.schedule_once(partial(Creator.load_saving, self), .2)
 
     def changer(instance,value,*args):
         self = Mainapp.get_running_app()
@@ -1171,7 +1187,6 @@ class ListBlueprint(DragBehavior ,MDCard):
             self.t = 0
         return super(ListBlueprint, self).on_touch_up(touch)
 
-
 class ListViewBanner(MDCard):
     pass
 
@@ -1234,7 +1249,8 @@ current_app_location = 'MainScreen'
 back_counter = 1
 sm = ScreenManagerMain(transition = CardTransition(direction = 'left'))
 
-class Mainapp(MDApp):
+class Mainapp(MDApp, ThemeManager):
+
     def build(self):
         Builder.load_file("reminder.kv")
         Window.bind(on_keyboard=self.on_key)

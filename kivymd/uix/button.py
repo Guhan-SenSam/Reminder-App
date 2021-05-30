@@ -883,7 +883,7 @@ class BaseButton(ThemableBehavior, ButtonBehavior, AnchorLayout):
     and defaults to `None`.
     """
 
-    _radius = NumericProperty(0)
+    _radius = NumericProperty(20)
     _md_bg_color = ColorProperty(None)  # last current button color
 
     def __init__(self, **kwargs):
