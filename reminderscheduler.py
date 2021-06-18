@@ -44,7 +44,7 @@ class ReminderScheduler():
         newdate.putExtra("IDENTIFICATION", reminder_id)
         newdate.putExtra("INTENT_ID", intent_id)
         newdate.putExtra("CURRENT_LIST", String(current_list))
-        newdatepending = PendingIntent.getBroadcast(context,intent_id,newdate,  PendingIntent.FLAG_CANCEL_CURRENT)
+        newdatepending = PendingIntent.getBroadcast(context,intent_id,newdate,PendingIntent.FLAG_CANCEL_CURRENT)
 
         #Create datetime string in python in the format for date object of java
         datetime_string = datetime.strptime(date_to_ring+ ' '+time_to_ring, "%x %I:%M %p").strftime("%Y-%m-%d %H:%M")
