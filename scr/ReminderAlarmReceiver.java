@@ -16,6 +16,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.media.AudioAttributes;
 import org.remindy.remindy.R;
+import org.org.remindy.FullScreenNotify;
 import java.lang.Math;
 
 public class ReminderAlarmReceiver extends BroadcastReceiver{
@@ -73,8 +74,8 @@ public class ReminderAlarmReceiver extends BroadcastReceiver{
         PendingIntent pendingsnooze = PendingIntent.getBroadcast(context, notification_id, snooze, PendingIntent.FLAG_CANCEL_CURRENT);
         NotificationCompat.Action snoozeaction = new NotificationCompat.Action.Builder( 0, "Snooze for 10 mins", pendingsnooze).build();
 
-
-
+        // Intent fsintent = new Intent(context,FullScreenNotify.class);
+        // PendingIntent fspending = PendingIntent.getActivity(context,notification_id,fsintent, PendingIntent.FLAG_ONE_SHOT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "REMINDY")
                 .setSmallIcon(R.drawable.ic_launcher)
@@ -89,6 +90,7 @@ public class ReminderAlarmReceiver extends BroadcastReceiver{
                 .setContentIntent(pendingintent)
                 .addAction(mrkcompaction)
                 .addAction(snoozeaction);
+                // .setFullScreenIntent(fspending,true);
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.notify(notification_id,builder.build());

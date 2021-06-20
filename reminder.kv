@@ -286,44 +286,32 @@
             font_size:'25sp'
             color:app.text_color
 
-        MDFillRoundFlatIconButton:
+        CustomButton:
             id:time_picker
+            name:'time_picker'
             text: 'Time'
-            font_size:'22sp'
-            icon:'alarm'
-            size_hint:None,None
-            width:root.width/1.5
-            pos_hint:{'center_x':.5, 'center_y':.5}
-            icon_color:app.accent_color
-            line_color:app.accent_color
-            text_color:app.accent_color
-            md_bg_color:app.primary_color
 
-        GridLayout:
+        BoxLayout:
             height:self.minimum_height
-            cols:3
             spacing:'10dp'
             size_hint_y:None
+            size_hint_x:1
 
 
-            MDLabel:
+            Label:
                 id:label2
                 text:'On These:'
                 font_name:'Roboto-Black.ttf'
                 font_size:sp(22)
                 color:app.text_color
-
-            MDFillRoundFlatIconButton:
-                id:type_picker
-                text: 'None'
-                font_size:'22sp'
-                icon:'cog'
+                size: self.texture_size
                 size_hint:None,None
-                icon_color:app.accent_color
-                line_color:app.accent_color
-                text_color:app.accent_color
-                md_bg_color:app.primary_color
-                on_release:app.reminder_type_menu.open()
+                pos_hint:{'center_y':.5}
+
+            CustomButton:
+                id:type_picker
+                name:'type_picker_creator'
+                text:'None'
 
 
         MDChipContainer:
@@ -507,3 +495,18 @@
         icon: root.left_icon
         theme_text_color: "Custom"
         text_color: app.accent_color
+
+<CustomButton>
+    canvas.before:
+        Color:
+            rgba:app.primary_color
+        RoundedRectangle:
+            radius:20,20,20,20
+            size:self.width,self.height
+            pos:self.pos
+    height:self.texture_size[1]+dp(20)
+    size_hint:1,None
+    font_name:'Roboto-Regular.ttf'
+    font_size:'22sp'
+    halign:'center'
+    color:app.accent_color

@@ -34,7 +34,7 @@ Date = autoclass('java.util.Date')
 class ReminderScheduler():
     #To update a reminder just overwrite existing reminder
 
-    def schedule(reminder_id,title,description, date_to_ring,time_to_ring, current_list, intent_id):
+    def schedule(reminder_id,title,description,date_to_ring,time_to_ring,current_list,intent_id):
         #Create Intent and add required properties to it
         newdate = Intent()
         newdate.setClass(context, ReminderAlarmReceiver)
