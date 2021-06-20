@@ -662,7 +662,7 @@ class BaseListItem(
     and defaults to `None`.
     """
 
-    font_style = StringProperty("Subtitle1")
+    font_style = StringProperty("H6")
     """
     Text font style. See ``kivymd.font_definitions.py``.
 

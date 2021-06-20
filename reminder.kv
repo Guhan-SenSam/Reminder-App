@@ -3,6 +3,8 @@
 #: import screendpi kivy.metrics.MetricsBase
 #:import thememanager theming.ThemeManager
 
+
+
 <ScreenManagerMain>:
     transiton:CardTransition()
 
@@ -38,6 +40,137 @@
         theme_text_color: "Custom"
         text_color: app.text_color
 
+<ListViewContent>:
+    height:wd.height
+
+    AKToolbarClass:
+        canvas:
+            Color:
+                rgba:app.primary_color
+            RoundedRectangle:
+                size:self.size
+                pos:self.pos
+        id:top_stuff
+        orientation:'vertical'
+        height:self.minimum_height+dp(70)
+        size_hint:1,None
+        spacing:dp(20)
+
+        FloatLayout:
+            padding:'20dp',0,'20dp',0
+            MDIconButton:
+                id:back_button
+                icon:'arrow-left'
+                pos_hint:{'top':.85, 'right':.15}
+                theme_text_color: "Custom"
+                text_color: app.text_color
+            MDIconButton:
+                id:delete_button
+                icon:'trash-can-outline'
+                pos_hint:{'top':.85, 'right':.95}
+                theme_text_color: "Custom"
+                text_color: app.text_color
+        BoxLayout:
+            padding:'20dp',0,'20dp',0
+            MDLabel:
+                id:title
+                font_name:'Roboto-Black.ttf'
+                color:app.text_color
+                font_size:'22sp'
+                shorten:True
+                shorten_from:'right'
+
+        ListDateBlueprint
+            id:date_stuff
+            size_hint:None,None
+
+    AKToolbarContent:
+        id:content
+        viewclass:"ListViewReminderElement"
+        height:wd.height
+
+<ListDateBlueprint@RecycleView>:
+    viewclass: 'ListViewDateCards'
+    data:[{'date': '21'},{'date': '22'}, {'date': '25'}, {'date': '29'},{'date': '24'},{'date': '2435'}, {'date': '2234'}, {'date': '2123'},]
+    width:wd.width
+    height:dp(80)
+    bar_color:0,0,0,0
+    bar_inactive_color: 0,0,0,0
+    RecycleBoxLayout:
+        id:date_container
+        padding:'20dp',0,'20dp',0
+        orientation: 'horizontal'
+        spacing:'20dp'
+        size_hint_x: None
+        width: self.minimum_width
+        default_size_hint:None,None
+        default_size:dp(80),dp(80)
+
+<ListViewDateCards>:
+    date:''
+    active:False
+    name:''
+    MDCard:
+        md_bg_color:app.accent_color if root.active else app.secondary_color
+        radius:20,20,20,20
+        pos_hint:{'center_y':.5}
+        size_hint:.90,.70
+        on_release:root.selected()
+        elevation:13
+
+        Label:
+            id:day_text
+            text:root.date
+            halign:'center'
+            font_name:'Roboto-Medium.ttf'
+
+<ListViewReminderElement>:
+    text:""
+    height:self.height if self.disable_height else self.ids.container.height
+    disable_height:False
+    color:[]
+    completed:False
+    name:
+    padding:10,10,10,10
+    spacing:dp(20)
+    md_bg_color:app.secondary_color
+    radius:20,20,20,20
+    parent_pos:root.to_parent(root.pos[0],root.pos[1])
+    opacity:1
+
+    canvas.before:
+        Color:
+            rgba:self.color
+        RoundedRectangle:
+            size:dp(18),self.height-dp(60)
+            pos:root.to_parent(root.pos[0],root.pos[1])[0]+dp(10),root.to_parent(root.pos[0],root.pos[1])[1]+dp(10)
+    RelativeLayout:
+        id:container
+        size_hint:None,None
+        pos:root.pos
+        width:root.width
+        height:root.ids.check_box.height+root.ids.label.height
+        MDCheckbox:
+            id:check_box
+            checkbox_icon_normal:"checkbox-blank-circle-outline"
+            checkbox_icon_down:"checkbox-marked-circle"
+            size: "30dp", "30dp"
+            size_hint:None, None
+            pos:0,root.height-dp(50)
+            active:root.completed
+
+        Label:
+            id:label
+            text:root.text
+            markup:True
+            font_size:'14sp'
+            font_name:'Roboto-Medium.ttf'
+            color:app.text_color
+            size:self.texture_size
+            text_size:root.width-dp(60),None
+            size_hint:None,None
+            pos:dp(40),root.height-dp(20)-self.height
+
 <ReminderScreen>:
     canvas:
         Color:
@@ -61,6 +194,7 @@
         text_color: app.text_color
 
     ScrollView:
+        id:scroll
         size_hint:1, None
         width:wd.width-dp(20)
         height:wd.height-dp(80)
@@ -152,67 +286,33 @@
             font_size:'25sp'
             color:app.text_color
 
-        MDFillRoundFlatIconButton:
+        CustomButton:
             id:time_picker
+            name:'time_picker'
             text: 'Time'
-            font_size:'22sp'
-            icon:'alarm'
-            size_hint:None,None
-            width:root.width/1.5
-            pos_hint:{'center_x':.5, 'center_y':.5}
-            icon_color:app.accent_color
-            line_color:app.accent_color
-            text_color:app.accent_color
-            md_bg_color:app.primary_color
 
-        GridLayout:
+        BoxLayout:
             height:self.minimum_height
-            cols:3
             spacing:'10dp'
             size_hint_y:None
+            size_hint_x:1
 
 
             Label:
                 id:label2
                 text:'On These:'
-                size: self.texture_size
-                size_hint:None,None
                 font_name:'Roboto-Black.ttf'
                 font_size:sp(22)
                 color:app.text_color
+                size: self.texture_size
+                size_hint:None,None
+                pos_hint:{'center_y':.5}
 
-            MDChipContainer:
-                type:'choice'
-                id:type
-                spacing:dp(5)
+            CustomButton:
+                id:type_picker
+                name:'type_picker_creator'
+                text:'None'
 
-                MDChip:
-                    id:days
-                    text: 'Days'
-                    icon: 'calendar-range'
-                    selected_chip_color:app.accent_color
-                    color:app.primary_color
-                    theme_text_color: "Custom"
-                    text_color: app.text_color
-                    icon_color:app.text_color
-
-                MDChip:
-                    id:dates
-                    text: 'Dates'
-                    icon: 'calendar'
-                    selected_chip_color:app.accent_color
-                    color:app.primary_color
-                    theme_text_color: "Custom"
-                    text_color: app.text_color
-                    icon_color:app.text_color
-                MDChip:
-                    id:none
-                    text:'None'
-                    icon:'close-circle-outline'
-                    selected_chip_color:app.accent_color
-                    color:app.primary_color
-                    text_color: app.text_color
-                    icon_color:app.text_color
 
         MDChipContainer:
             id:days_container
@@ -336,7 +436,7 @@
         markup:True
         max_lines:4
         split_str:' '
-        text_size: self.parent.width, None
+        text_size: self.parent.width-dp(20), None
         font_size:'20sp'
 
 <ListBlueprint>:
@@ -348,111 +448,6 @@
     elevation:15
     radius:40,40,40,40
     size_hint:None,None
-
-<ListViewBanner>:
-    elevation:10
-    md_bg_color:app.background_color
-    pos_hint:{"center_x":.5, "center_y":.9}
-    size_hint:1,0.1
-    radius:0,0,dp(40), dp(40)
-
-    FloatLayout:
-        size:self.parent.size
-        pos:self.parent.pos
-
-        MDIconButton:
-            id:back_button
-            icon:'arrow-left'
-            pos_hint:{"center_x":.1, "center_y":.5}
-            theme_text_color: "Custom"
-            text_color: app.text_color
-
-        Label:
-            id:list_title
-            font_name:"Roboto-Bold.ttf"
-            font_size:"20sp"
-            text_size:root.width- dp(100), dp(20)
-            shorten:True
-            shorten_from:"right"
-            pos_hint:{"center_x":.5, "center_y":.5}
-            halign:'center'
-            color:app.text_color
-
-        MDIconButton:
-            id:delete_button
-            icon:'trash-can-outline'
-            pos_hint:{"center_x":.9, "center_y":.5}
-            theme_text_color: "Custom"
-            text_color: app.text_color
-
-<ListViewBlueprint>:
-    viewclass: 'IndivualReminderElementBlueprint'
-    data:
-    SelectableRecycleBoxLayout:
-        id: container
-        default_size: None, dp(80)
-        default_size_hint: 1, None
-        size_hint_y: None
-        height: self.minimum_height
-        orientation: 'vertical'
-        padding: 10,10,10,0
-        spacing:'5dp'
-
-<IndivualReminderElementBlueprint>:
-    text_title: ''
-    text_description:" "
-    name:
-    completed:False
-    show_button:1
-    md_bg_color:app.accent_color
-    elevation:0
-    alignment:'left'
-    padding:0,0,0,0
-    font:'Roboto-Medium.ttf'
-    fontsize:'18sp'
-
-    MDCheckbox:
-        id:check_box
-        checkbox_icon_normal:"checkbox-blank-circle-outline"
-        checkbox_icon_down:"checkbox-marked-circle"
-        size: "60dp", "60dp"
-        size_hint:None, None
-        pos_hint:{'center_y':.5}
-        active:self.parent.completed
-        opacity:root.show_button
-        on_release:app.checker(self)
-
-    BoxLayout:
-        padding:10,0,0,0
-        orientation:"vertical"
-        size_hint:1,1
-        separation:'20dp'
-
-        Label:
-            id:title
-            text:root.text_title
-            size_hint:None,None
-            size:self.texture_size
-            text_size:self.parent.parent.width-dp(70), dp(20)
-            font_name:root.font
-            font_size:root.fontsize
-            shorten:True
-            shorten_from:"right"
-            halign:root.alignment
-            strikethrough:True if root.completed else False
-            color:app.text_color
-        Label:
-            id:desc
-            text:root.text_description
-            size_hint:None,None
-            size:self.texture_size
-            text_size:self.parent.parent.width-dp(70), dp(40)
-            font_name:"Roboto-Regular.ttf"
-            color:app.secondary_text_color
-            font_size:"16sp"
-            split_str:' '
-            valign:"top"
-            strikethrough:True if root.completed else False
 
 <NewListBlueprint>:
     size_hint:1,1
@@ -493,3 +488,25 @@
         radius:20,20,20,20
         theme_text_color: "Custom"
         text_color: app.text_color
+
+<CustomListObject>
+
+    IconLeftWidget:
+        icon: root.left_icon
+        theme_text_color: "Custom"
+        text_color: app.accent_color
+
+<CustomButton>
+    canvas.before:
+        Color:
+            rgba:app.primary_color
+        RoundedRectangle:
+            radius:20,20,20,20
+            size:self.width,self.height
+            pos:self.pos
+    height:self.texture_size[1]+dp(20)
+    size_hint:1,None
+    font_name:'Roboto-Regular.ttf'
+    font_size:'22sp'
+    halign:'center'
+    color:app.accent_color

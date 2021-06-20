@@ -13,7 +13,7 @@ package.domain = org.remindy
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,ttf,db,java
+source.include_exts = py,png,jpg,kv,atlas,ttf,db,java,xml
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -28,7 +28,7 @@ source.exclude_dirs = bin,pics,.buildozer,.git,other
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.2.1
+version = 0.3.0
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -92,7 +92,7 @@ android.presplash_color = black
 icon.adaptive_background.filename = remindyicon.png
 
 # (list) Permissions
-android.permissions = VIBRATE,WAKE_LOCK
+android.permissions = VIBRATE,WAKE_LOCK,USE_FULL_SCREEN_INTENT
 
 # (list) features (adds uses-feature -tags to manifest)
 #android.features = android.hardware.usb.host
@@ -189,7 +189,7 @@ android.enable_androidx = True
 #android.add_packaging_options =
 
 # (list) Java classes to add as activities to the manifest.
-#android.add_activities = com.example.ExampleActivity
+#android.add_activities =
 
 # (str) OUYA Console category. Should be one of GAME or APP
 # If you leave this blank, OUYA support will not be enabled

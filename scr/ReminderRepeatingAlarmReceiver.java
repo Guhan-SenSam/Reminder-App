@@ -15,7 +15,7 @@ import org.kivy.android.PythonActivity;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.media.AudioAttributes;
-import org.remindy.remindy.R.drawable;
+import org.remindy.remindy.R;
 import java.util.Calendar;
 import android.app.AlarmManager;
 import java.lang.Math;
@@ -77,7 +77,7 @@ public class ReminderRepeatingAlarmReceiver extends BroadcastReceiver{
                 NotificationCompat.Action snoozeaction = new NotificationCompat.Action.Builder( 0, "Snooze for 10 mins", pendingsnooze).build();
 
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "REMINDY")
-                        .setSmallIcon(drawable.icon)
+                        .setSmallIcon(R.drawable.ic_launcher)
                         .setContentTitle(intent.getExtras().getString("TITLE"))
                         .setContentText(intent.getExtras().getString("DESCRIPTION"))
                         .setTicker("New Reminder")
