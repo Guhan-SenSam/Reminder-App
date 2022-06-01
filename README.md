@@ -1,6 +1,10 @@
 # Reminder-App
  An android app for creating reminders made using the kivy and kivyMD framework for python.
  
+ ![](https://github.com/Guhan-SenSam/Reminder-App/blob/main/pics/photo_2022-06-01_20-29-57.jpg)
+ ![](https://github.com/Guhan-SenSam/Reminder-App/blob/main/pics/photo_2022-06-01_20-30-03.jpg)
+ ![](https://github.com/Guhan-SenSam/Reminder-App/blob/main/reminder%20design.png)
+ 
 ## Features
 This reminder app organizes your reminders into lists. You can create multiple lists that contains reminders inside them. Each reminder can be set to notify you through notifications on a particular day or date at a specific time.
 * Create and delete named lists that can store reminders inside them.
